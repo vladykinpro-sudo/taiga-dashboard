@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Тайга · Работа Мастерской продаж</title>
+<style>
+:root {
+  --bg: #0e1116;
+  --bg-2: #141821;
+  --card: #171b22;
+  --card-2: #1f242d;
+  --card-hover: #232935;
+  --border: #2a2f3a;
+  --border-strong: #3a4050;
+  --text: #e8eaed;
+  --text-dim: #9ba3ae;
+  --text-muted: #6b7280;
+  --brand: #d4b26a;
+  --accent: #3b82f6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --stage-1: #ef4444;
+  --stage-2: #f59e0b;
+  --stage-3: #3b82f6;
+  --stage-4: #10b981;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg-2); border-bottom: 1px solid var(--border);
+  padding: 14px 32px; display: flex; justify-content: space-between; align-items: center;
+}
+.topbar-left { display: flex; align-items: center; gap: 24px; }
+.brand-mark { font-size: 11px; letter-spacing: 3px; color: var(--brand); font-weight: 600; }
+.topbar-title { font-size: 15px; font-weight: 600; }
+.topbar-title small { color: var(--text-dim); font-weight: 400; margin-left: 8px; }
+.topbar-right { display: flex; align-items: center; gap: 16px; font-size: 12px; color: var(--text-muted); }
+.live-dot {
+  display: inline-block; width: 8px; height: 8px; background: var(--success); border-radius: 50%;
+  margin-right: 6px; box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite;
+}
+.live-dot.err { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+.live-dot.wait { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
+@keyframes pulse { 0%,100% {opacity:1;} 50% {opacity:0.5;} }
+.refresh-btn {
+  background: var(--card); border: 1px solid var(--border); color: var(--text-dim);
+  padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; transition: all 0.15s;
+}
+.refresh-btn:hover { background: var(--card-hover); color: var(--text); }
+.refresh-btn:disabled { opacity: 0.5; cursor: wait; }
+
+.filterbar {
+  background: var(--bg-2); border-bottom: 1px solid var(--border);
+  padding: 12px 32px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+}
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+.filter-pills { display: flex; gap: 4px; }
+.filter-pill {
+  padding: 6px 12px; background: var(--card); border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 20px; font-size: 12px; cursor: pointer;
+  transition: all 0.15s; user-select: none;
+}
+.filter-pill:hover { background: var(--card-hover); color: var(--text); }
+.filter-pill.active { background: var(--accent); border-color: var(--accent); color: white; }
+.filter-select {
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; min-width: 200px;
+}
+.filter-select:focus { outline: none; border-color: var(--accent); }
+
+.main { padding: 24px 32px 60px; max-width: 1600px; margin: 0 auto; }
+
+/* Loading */
+.loading-state {
+  display: flex; align-items: center; justify-content: center;
+  padding: 80px 20px; color: var(--text-dim); font-size: 14px; gap: 12px;
+}
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-state {
+  padding: 40px 24px; background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 10px; margin: 40px auto; max-width: 600px; text-align: center;
+}
+.error-state h3 { color: var(--danger); margin-bottom: 8px; }
+.error-state p { color: var(--text-dim); font-size: 13px; }
+.error-state code {
+  display: block; margin-top: 12px; padding: 8px; background: var(--card);
+  border-radius: 4px; font-size: 11px; color: var(--text-muted); word-break: break-all;
+}
+
+.section { margin-bottom: 24px; }
+.section-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.section-title { font-size: 12px; letter-spacing: 2px; color: var(--text-muted); text-transform: uppercase; }
+.section-meta { font-size: 12px; color: var(--text-muted); }
+
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.kpi {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px; position: relative; overflow: hidden;
+}
+.kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.kpi-value { font-size: 28px; font-weight: 600; }
+.kpi-value .unit { font-size: 14px; color: var(--text-dim); margin-left: 4px; font-weight: 400; }
+.kpi-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+.kpi-trend { position: absolute; top: 16px; right: 16px; font-size: 11px; padding: 2px 8px; border-radius: 8px; }
+.kpi-trend.pos { background: rgba(16,185,129,0.15); color: var(--success); }
+.kpi-trend.neg { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+.team-block {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 20px; margin-bottom: 20px;
+}
+.team-block-title {
+  font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text);
+  display: flex; align-items: center; gap: 8px;
+}
+.stage-track { position: relative; padding: 40px 0 24px; }
+.stage-bar { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px; height: 6px; }
+.stage-seg { border-radius: 3px; }
+.stage-seg.s1 { background: rgba(239,68,68,0.25); }
+.stage-seg.s2 { background: rgba(245,158,11,0.25); }
+.stage-seg.s3 { background: rgba(59,130,246,0.25); }
+.stage-seg.s4 { background: rgba(16,185,129,0.25); }
+.stage-labels {
+  display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 3px;
+  margin-top: 10px; font-size: 11px; color: var(--text-muted); text-align: center;
+}
+.stage-labels span { text-transform: uppercase; letter-spacing: 1px; }
+.stage-pin {
+  position: absolute; top: 8px; transform: translateX(-50%);
+  padding: 4px 10px; border: 2px solid var(--bg); border-radius: 14px;
+  font-size: 11px; font-weight: 600; color: white; cursor: pointer;
+  white-space: nowrap; transition: transform 0.15s;
+}
+.stage-pin:hover { transform: translateX(-50%) scale(1.1); z-index: 3; }
+.stage-pin.s1 { background: var(--stage-1); }
+.stage-pin.s2 { background: var(--stage-2); }
+.stage-pin.s3 { background: var(--stage-3); }
+.stage-pin.s4 { background: var(--stage-4); }
+.stage-empty { text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 13px; }
+
+.expand-header {
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 20px; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; transition: background 0.15s; user-select: none;
+}
+.expand-header:hover { background: var(--card-hover); }
+.expand-header.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.expand-title { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.expand-icon {
+  width: 20px; height: 20px; border-radius: 50%; background: var(--card-2);
+  display: flex; align-items: center; justify-content: center; font-size: 14px; transition: transform 0.2s;
+}
+.expand-header.open .expand-icon { transform: rotate(45deg); }
+.expand-body { display: none; border: 1px solid var(--border); border-top: none; border-radius: 0 0 10px 10px; background: var(--card); }
+.expand-body.open { display: block; }
+
+.managers-list { padding: 4px 12px 12px; }
+.manager-row {
+  display: grid; grid-template-columns: 40px 200px 140px 100px 1fr 140px 100px;
+  gap: 16px; align-items: center; padding: 14px 12px;
+  border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s;
+}
+.manager-row:hover { background: var(--card-hover); }
+.manager-row:last-child { border-bottom: none; }
+.manager-avatar {
+  width: 36px; height: 36px; border-radius: 50%; background: var(--card-2);
+  border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+.manager-name-cell { font-size: 14px; font-weight: 500; }
+.manager-name-cell small { color: var(--text-muted); font-weight: 400; display: block; font-size: 11px; margin-top: 2px; }
+.stage-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; padding: 4px 10px; border-radius: 12px; border: 1px solid var(--border);
+}
+.stage-badge .dot { width: 8px; height: 8px; border-radius: 50%; }
+.stage-badge.s1 .dot { background: var(--stage-1); }
+.stage-badge.s2 .dot { background: var(--stage-2); }
+.stage-badge.s3 .dot { background: var(--stage-3); }
+.stage-badge.s4 .dot { background: var(--stage-4); }
+.manager-score { font-size: 18px; font-weight: 600; }
+.mini-chart { height: 32px; display: flex; align-items: flex-end; gap: 3px; }
+.mini-bar { flex: 1; background: var(--accent); border-radius: 2px; opacity: 0.7; min-height: 4px; }
+.mini-bar:last-child { opacity: 1; }
+.manager-activity { font-size: 12px; color: var(--text-dim); }
+.open-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--text-dim);
+  padding: 6px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.open-btn:hover { background: var(--accent); border-color: var(--accent); color: white; }
+.no-data-row {
+  padding: 30px 20px; text-align: center; color: var(--text-muted); font-size: 13px;
+}
+
+.activity-feed { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.feed-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.feed-item:last-child { border-bottom: none; }
+.feed-time { font-size: 11px; color: var(--text-muted); min-width: 70px; }
+.feed-text { flex: 1; color: var(--text-dim); }
+.feed-text b { color: var(--text); font-weight: 500; }
+.feed-tag {
+  padding: 2px 8px; border-radius: 6px; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
+}
+.feed-tag.call { background: rgba(59,130,246,0.15); color: var(--accent); }
+.feed-tag.meeting { background: rgba(212,178,106,0.15); color: var(--brand); }
+.feed-tag.strong { background: rgba(16,185,129,0.15); color: var(--success); }
+.feed-tag.rec { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+.two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 200; display: none;
+  align-items: flex-start; justify-content: center;
+  padding: 40px 20px; overflow-y: auto;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 14px; max-width: 1200px; width: 100%; overflow: hidden;
+}
+.modal-header {
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.modal-title-block h2 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+.modal-title-block .sub { font-size: 13px; color: var(--text-dim); }
+.modal-close {
+  background: transparent; border: none; color: var(--text-dim); font-size: 24px;
+  cursor: pointer; padding: 4px 12px; border-radius: 6px; transition: all 0.15s;
+}
+.modal-close:hover { background: var(--card); color: var(--text); }
+.modal-tabs { display: flex; gap: 4px; padding: 12px 24px 0; border-bottom: 1px solid var(--border); }
+.modal-tab {
+  padding: 10px 16px; background: transparent; border: none; color: var(--text-dim);
+  font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.15s; font-family: inherit;
+}
+.modal-tab:hover { color: var(--text); }
+.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.modal-body { padding: 24px; max-height: 70vh; overflow-y: auto; }
+
+.mod-stage {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 20px; margin-bottom: 20px;
+}
+.mod-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.mod-comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.mod-comp { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.mod-comp-name { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+.mod-comp-values { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.mod-comp-now { font-size: 24px; font-weight: 700; }
+.mod-comp-detail { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+.mod-comp-bar { height: 4px; background: var(--card-2); border-radius: 2px; overflow: hidden; }
+.mod-comp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--success)); border-radius: 2px; transition: width 0.4s; }
+
+.calls-table {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden; border-collapse: collapse;
+}
+.calls-table th, .calls-table td {
+  padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.calls-table th {
+  background: var(--card-2); color: var(--text-muted);
+  font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500;
+}
+.calls-table tr:last-child td { border-bottom: none; }
+.calls-table tr:hover td { background: var(--card-hover); }
+.call-type {
+  display: inline-block; padding: 2px 8px; border-radius: 6px;
+  font-size: 11px; background: var(--card-2); color: var(--text-dim);
+}
+.call-score-pill {
+  display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;
+}
+.call-score-pill.high { background: rgba(16,185,129,0.15); color: var(--success); }
+.call-score-pill.mid { background: rgba(59,130,246,0.15); color: var(--accent); }
+.call-score-pill.low { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+.fb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.fb-block { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+.fb-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.fb-strong .fb-title { color: var(--success); }
+.fb-rec .fb-title { color: var(--warning); }
+.fb-item {
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; line-height: 1.55; color: var(--text-dim); display: flex; gap: 10px;
+}
+.fb-item:last-child { border-bottom: none; }
+.fb-item small { font-size: 11px; color: var(--text-muted); min-width: 50px; }
+.fb-item span b { color: var(--text); }
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+@media (max-width: 1200px) {
+  .two-col { grid-template-columns: 1fr; }
+  .manager-row { grid-template-columns: 40px 1fr 120px 80px 80px; }
+  .manager-row .mini-chart, .manager-row .manager-activity { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="brand-mark">VLADYKIN.PRO</div>
+    <div class="topbar-title">Тайга <small>· работа Мастерской продаж</small></div>
+  </div>
+  <div class="topbar-right">
+    <div id="statusIndicator"><span class="live-dot wait"></span><span id="statusText">Загрузка данных...</span></div>
+    <button class="refresh-btn" id="refreshBtn" onclick="reloadData()">↻ Обновить</button>
+  </div>
+</div>
+
+<div class="filterbar">
+  <div class="filter-group">
+    <span class="filter-label">Период</span>
+    <div class="filter-pills" data-filter="period">
+      <div class="filter-pill" data-val="week">Неделя</div>
+      <div class="filter-pill active" data-val="month">Месяц</div>
+      <div class="filter-pill" data-val="quarter">Квартал</div>
+      <div class="filter-pill" data-val="all">Всё время</div>
+    </div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Менеджер</span>
+    <select class="filter-select" id="managerFilter"><option value="all">Вся команда</option></select>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Тип звонка</span>
+    <div class="filter-pills" data-filter="type">
+      <div class="filter-pill active" data-val="all">Все</div>
+      <div class="filter-pill" data-val="входящий">Входящий</div>
+      <div class="filter-pill" data-val="холодный">Холодный</div>
+      <div class="filter-pill" data-val="техническое_уточнение">Техуточнение</div>
+      <div class="filter-pill" data-val="выход_на_ЛПР">Выход на ЛПР</div>
+    </div>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+  <div class="loading-state"><div class="spinner"></div><span>Читаю данные из Google Sheets...</span></div>
+</div>
+
+<!-- Модалка -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <h2 id="modalName">—</h2>
+        <div class="sub" id="modalRole">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-tab="overview" onclick="switchTab('overview')">Обзор</button>
+      <button class="modal-tab" data-tab="competencies" onclick="switchTab('competencies')">Компетенции</button>
+      <button class="modal-tab" data-tab="calls" onclick="switchTab('calls')">Звонки</button>
+      <button class="modal-tab" data-tab="plan" onclick="switchTab('plan')">План работы</button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <div class="tab-panel active" id="tab-overview"></div>
+      <div class="tab-panel" id="tab-competencies"></div>
+      <div class="tab-panel" id="tab-calls"></div>
+      <div class="tab-panel" id="tab-plan"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================
+// КОНФИГ
+// =============================
+const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec';
+
+// Клиентские компетенции — группируем 39 параметров в 6 понятных блоков
+const COMPETENCIES = [
+  { code: 'contact', name: 'Установление контакта', params: ['p1','p2','p3','p4','p5','p6'] },
+  { code: 'lead',    name: 'Ведение разговора',    params: ['p7'] },
+  { code: 'need',    name: 'Выявление потребностей', params: ['p8','p9','p10','p11','p12','p13','p14','p15','p16','p17','p18'] },
+  { code: 'pitch',   name: 'Презентация ценности', params: ['p19','p20','p21','p22','p23','p24','p25'] },
+  { code: 'object',  name: 'Работа с возражениями', params: ['p26','p27','p28','p29','p30'] },
+  { code: 'close',   name: 'Закрытие и next step', params: ['p31','p32','p33','p34'] }
+];
+
+// Состояние
+let rawData = null;
+let filters = { period: 'month', manager: 'all', type: 'all' };
+
+// =============================
+// ЗАГРУЗКА
+// =============================
+async function loadData() {
+  setStatus('wait', 'Загружаю данные...');
+  document.getElementById('refreshBtn').disabled = true;
+  
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    
+    rawData = json;
+    const timeStr = formatUpdatedAt(json.updated_at);
+    setStatus('ok', `Обновлено: ${timeStr}`);
+    populateManagerFilter();
+    render();
+  } catch (err) {
+    setStatus('err', 'Ошибка загрузки');
+    document.getElementById('mainContent').innerHTML = `
+      <div class="error-state">
+        <h3>Не удалось загрузить данные</h3>
+        <p>Проверь URL эндпоинта и настройки доступа Apps Script.</p>
+        <code>${escapeHtml(String(err))}</code>
+      </div>
+    `;
+  } finally {
+    document.getElementById('refreshBtn').disabled = false;
+  }
+}
+
+function reloadData() { loadData(); }
+
+function setStatus(kind, text) {
+  const dot = document.querySelector('.live-dot');
+  dot.classList.remove('wait', 'err');
+  if (kind === 'wait') dot.classList.add('wait');
+  else if (kind === 'err') dot.classList.add('err');
+  document.getElementById('statusText').textContent = text;
+}
+
+function formatUpdatedAt(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+  } catch { return '—'; }
+}
+
+// =============================
+// АГРЕГАЦИЯ
+// =============================
+
+// Возвращает отфильтрованный список звонков
+function filteredCalls() {
+  if (!rawData) return [];
+  let calls = rawData.calls_scored.slice();
+  
+  if (filters.manager !== 'all') {
+    calls = calls.filter(c => c.manager === filters.manager);
+  }
+  if (filters.type !== 'all') {
+    calls = calls.filter(c => c.call_type === filters.type);
+  }
+  if (filters.period !== 'all') {
+    const now = new Date();
+    let cutoff;
+    if (filters.period === 'week') cutoff = new Date(now.getTime() - 7 * 86400000);
+    else if (filters.period === 'month') cutoff = new Date(now.getTime() - 31 * 86400000);
+    else if (filters.period === 'quarter') cutoff = new Date(now.getTime() - 93 * 86400000);
+    
+    // Пока данные все за июль 2026 (будущее относительно фактического сейчас) — 
+    // не режем по времени если оно даёт 0. Иначе всё пустое.
+    const filteredByDate = calls.filter(c => {
+      const d = new Date(c.call_date);
+      return d >= cutoff;
+    });
+    if (filteredByDate.length > 0) calls = filteredByDate;
+  }
+  
+  return calls;
+}
+
+// % по параметру: 1/(1+0), NA исключаются
+function pctForParam(calls, paramKey) {
+  let ones = 0, zeros = 0;
+  for (const c of calls) {
+    const v = c[paramKey];
+    if (v === 1 || v === '1') ones++;
+    else if (v === 0 || v === '0') zeros++;
+  }
+  if (ones + zeros === 0) return null;
+  return Math.round((ones / (ones + zeros)) * 100);
+}
+
+// % по группе параметров (компетенции)
+function pctForGroup(calls, paramKeys) {
+  let ones = 0, zeros = 0;
+  for (const c of calls) {
+    for (const p of paramKeys) {
+      const v = c[p];
+      if (v === 1 || v === '1') ones++;
+      else if (v === 0 || v === '0') zeros++;
+    }
+  }
+  if (ones + zeros === 0) return null;
+  return Math.round((ones / (ones + zeros)) * 100);
+}
+
+// Средний pct_score по звонкам
+function avgPctScore(calls) {
+  if (calls.length === 0) return null;
+  const sum = calls.reduce((acc, c) => acc + (parseFloat(c.pct_score) * 100 || 0), 0);
+  return Math.round(sum / calls.length);
+}
+
+// Стадия из среднего балла
+function stageFromScore(score) {
+  if (score === null) return { code: 's1', name: 'Нет данных', pos: 12.5 };
+  if (score < 55) return { code: 's1', name: 'Отрицание', pos: 12.5 };
+  if (score < 70) return { code: 's2', name: 'Осознание', pos: 37.5 };
+  if (score < 85) return { code: 's3', name: 'Имитация', pos: 62.5 };
+  return { code: 's4', name: 'Интеграция', pos: 87.5 };
+}
+
+// Все уникальные менеджеры
+function allManagers() {
+  if (!rawData) return [];
+  const set = new Set();
+  rawData.calls_scored.forEach(c => c.manager && set.add(c.manager));
+  return Array.from(set).sort();
+}
+
+// Данные по одному менеджеру
+function managerStats(name) {
+  const allCalls = rawData.calls_scored.filter(c => c.manager === name);
+  const period = filteredCalls().filter(c => c.manager === name);
+  const avg = avgPctScore(period);
+  const stage = stageFromScore(avg);
+  
+  return {
+    name,
+    company: allCalls[0]?.company || '',
+    calls_period: period,
+    calls_all: allCalls,
+    count_period: period.length,
+    count_all: allCalls.length,
+    avg_score: avg,
+    stage
+  };
+}
+
+// =============================
+// РЕНДЕР ГЛАВНОГО ЭКРАНА
+// =============================
+function render() {
+  if (!rawData) return;
+  
+  const calls = filteredCalls();
+  const managers = allManagers();
+  const managerStats_ = managers.map(m => managerStats(m));
+  
+  // KPI команды
+  const totalCalls = calls.length;
+  const meetingsPerManager = 4; // приближение — 1 разбор в неделю
+  const totalMeetings = managers.length * meetingsPerManager;
+  const teamAvg = avgPctScore(calls);
+  
+  // Распределение по стадиям
+  const stageDist = { s1: 0, s2: 0, s3: 0, s4: 0 };
+  managerStats_.forEach(m => { if (m.stage.code !== 'unknown') stageDist[m.stage.code]++; });
+  
+  const stageDistHtml = `
+    <span style="color: var(--stage-1)">●</span> ${stageDist.s1}
+    <span style="color: var(--stage-2); margin-left: 8px">●</span> ${stageDist.s2}
+    <span style="color: var(--stage-3); margin-left: 8px">●</span> ${stageDist.s3}
+    <span style="color: var(--stage-4); margin-left: 8px">●</span> ${stageDist.s4}
+  `;
+  
+  const pinsHtml = managerStats_.map((m, idx) => {
+    // Разнесём пины по горизонтали внутри стадии
+    const base = m.stage.pos;
+    const jitter = (idx % 3 - 1) * 4;
+    const left = Math.max(3, Math.min(97, base + jitter));
+    return `<div class="stage-pin ${m.stage.code}" style="left: ${left}%; top: ${8 + (idx % 2) * 32}px;" onclick="openManager('${escapeAttr(m.name)}')">${escapeHtml(m.name)}</div>`;
+  }).join('');
+  
+  // Активность — свежие звонки
+  const recentCalls = calls.slice().sort((a, b) => new Date(b.scored_at) - new Date(a.scored_at)).slice(0, 6);
+  const feedHtml = recentCalls.map(c => {
+    const pct = Math.round((parseFloat(c.pct_score) || 0) * 100);
+    const dateStr = formatCallDate(c.call_date);
+    return `
+      <div class="feed-item">
+        <div class="feed-time">${dateStr}</div>
+        <div class="feed-text">
+          <b>${escapeHtml(c.manager)}</b> — ${escapeHtml(c.call_summary || 'звонок разобран')}
+          <br><small style="color:var(--text-muted);">Балл: ${pct}% · тип: ${escapeHtml(c.call_type || '—')}</small>
+        </div>
+        <div class="feed-tag call">AI разбор</div>
+      </div>
+    `;
+  }).join('');
+  
+  // Список задач команды из recommendations
+  const topRecs = getTopRecommendations(5);
+  const tasksHtml = topRecs.map((r, i) => `
+    <div class="feed-item">
+      <div class="feed-time" style="color: var(--brand); font-weight: 600;">${i+1}</div>
+      <div class="feed-text"><b>${escapeHtml(r.text)}</b><br><small style="color:var(--text-muted);">Упоминается в ${r.count} звонках</small></div>
+    </div>
+  `).join('') || '<div style="text-align:center; color:var(--text-muted); padding: 20px;">Задачи собираются по мере разбора звонков</div>';
+  
+  const managerRowsHtml = managerStats_.length === 0 ? 
+    '<div class="no-data-row">Пока нет данных. Прогони первого менеджера через форму n8n.</div>' :
+    managerStats_.map(m => renderManagerRow(m)).join('');
+  
+  document.getElementById('mainContent').innerHTML = `
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Отдел «Работа с архитекторами»</div>
+        <div class="section-meta">${managers.length} ${pluralize(managers.length, 'менеджер','менеджера','менеджеров')} · Мастер: Романова Анастасия</div>
+      </div>
+      
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="kpi-label">Разобрано звонков</div>
+          <div class="kpi-value">${totalCalls}<span class="unit">${periodLabel(filters.period)}</span></div>
+          <div class="kpi-sub">все автоматически AI-агентом</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Разборов с мастером</div>
+          <div class="kpi-value">${totalMeetings}<span class="unit">встреч</span></div>
+          <div class="kpi-sub">4 разбора в неделю по расписанию</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Средний балл команды</div>
+          <div class="kpi-value">${teamAvg !== null ? teamAvg + '%' : '—'}</div>
+          <div class="kpi-sub">по ${calls.length} ${pluralize(calls.length, 'звонку','звонкам','звонкам')} за период</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Распределение по стадиям</div>
+          <div class="kpi-value" style="font-size: 18px; margin-top: 4px;">${stageDistHtml}</div>
+          <div class="kpi-sub">Отрицание · Осознание · Имитация · Интеграция</div>
+        </div>
+      </div>
+      
+      <div class="team-block">
+        <div class="team-block-title">Карта команды по 4 стадиям изменения поведения</div>
+        <div class="stage-track">
+          <div class="stage-bar">
+            <div class="stage-seg s1"></div>
+            <div class="stage-seg s2"></div>
+            <div class="stage-seg s3"></div>
+            <div class="stage-seg s4"></div>
+          </div>
+          ${pinsHtml || '<div class="stage-empty">Нет менеджеров с данными для отображения</div>'}
+          <div class="stage-labels">
+            <span>Отрицание</span><span>Осознание</span><span>Имитация</span><span>Интеграция</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="expand-header" id="expandToggle" onclick="toggleExpand()">
+        <div class="expand-title">
+          <div class="expand-icon">+</div>
+          Менеджеры команды (${managers.length})
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted);">Клик — раскрыть список</div>
+      </div>
+      <div class="expand-body" id="expandBody">
+        <div class="managers-list">${managerRowsHtml}</div>
+      </div>
+    </div>
+    
+    <div class="two-col">
+      <div>
+        <div class="section-header">
+          <div class="section-title">Активность за период</div>
+          <div class="section-meta">${periodLabel(filters.period)}</div>
+        </div>
+        <div class="activity-feed">${feedHtml || '<div style="text-align:center; color:var(--text-muted); padding: 20px;">Нет звонков за выбранный период</div>'}</div>
+      </div>
+      <div>
+        <div class="section-header">
+          <div class="section-title">Приоритеты команды</div>
+          <div class="section-meta">по данным разборов</div>
+        </div>
+        <div class="activity-feed">${tasksHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+// Рендер одной строки менеджера
+function renderManagerRow(m) {
+  const initials = getInitials(m.name);
+  const avgStr = m.avg_score !== null ? m.avg_score + '%' : '—';
+  const activityStr = `${m.count_period} ${pluralize(m.count_period, 'звонок','звонка','звонков')} · 4 разбора`;
+  
+  // Мини-график — последние 6 звонков по хронологии
+  const sorted = m.calls_all.slice().sort((a,b) => new Date(a.call_date) - new Date(b.call_date));
+  const last6 = sorted.slice(-6);
+  const bars = last6.map(c => {
+    const h = Math.round((parseFloat(c.pct_score) || 0) * 100);
+    return `<div class="mini-bar" style="height: ${Math.max(h, 8)}%"></div>`;
+  }).join('') || '<div class="mini-bar" style="height:8%; opacity: 0.3;"></div>';
+  
+  return `
+    <div class="manager-row" onclick="openManager('${escapeAttr(m.name)}')">
+      <div class="manager-avatar">${initials}</div>
+      <div class="manager-name-cell">${escapeHtml(m.name)}<small>${escapeHtml(m.company)}</small></div>
+      <div class="stage-badge ${m.stage.code}"><span class="dot"></span>${m.stage.name}</div>
+      <div class="manager-score">${avgStr}</div>
+      <div class="mini-chart">${bars}</div>
+      <div class="manager-activity">${activityStr}</div>
+      <button class="open-btn">Открыть</button>
+    </div>
+  `;
+}
+
+// Топ рекомендаций из calls_feedback
+function getTopRecommendations(limit) {
+  if (!rawData || !rawData.calls_feedback) return [];
+  const recs = rawData.calls_feedback.filter(f => f.feedback_type === 'recommendation');
+  // Группируем по первым 40 символам (грубая кластеризация одинаковых)
+  const groups = {};
+  recs.forEach(r => {
+    const text = String(r.feedback_text || '');
+    const key = text.slice(0, 40).toLowerCase();
+    if (!groups[key]) groups[key] = { text, count: 0 };
+    groups[key].count++;
+  });
+  return Object.values(groups).sort((a, b) => b.count - a.count).slice(0, limit);
+}
+
+// =============================
+// МОДАЛКА
+// =============================
+function openManager(name) {
+  const m = managerStats(name);
+  document.getElementById('modalName').textContent = m.name;
+  document.getElementById('modalRole').textContent = `Компания «${m.company}» · Стадия: ${m.stage.name}`;
+  
+  // Overview
+  const stageText = getStageDescription(m.stage.code);
+  document.getElementById('tab-overview').innerHTML = `
+    <div class="mod-stage">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+        <div style="font-size: 14px;"><b>Стадия:</b> <span style="color: var(--accent);">${m.stage.name}</span></div>
+        <div style="font-size: 12px; color: var(--text-muted);">Определяется автоматически по среднему баллу за период</div>
+      </div>
+      <div style="font-size: 13px; color: var(--text-dim); line-height: 1.6;">${stageText}</div>
+    </div>
+    <div class="mod-kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Звонков за период</div>
+        <div class="kpi-value">${m.count_period}</div>
+        <div class="kpi-sub">из ${m.count_all} всего</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Разборов с мастером</div>
+        <div class="kpi-value">4</div>
+        <div class="kpi-sub">еженедельно</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Средний балл</div>
+        <div class="kpi-value">${m.avg_score !== null ? m.avg_score + '%' : '—'}</div>
+        <div class="kpi-sub">за выбранный период</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Тип звонков</div>
+        <div class="kpi-value" style="font-size: 15px; margin-top: 6px;">${callTypeBreakdown(m.calls_period)}</div>
+        <div class="kpi-sub">распределение</div>
+      </div>
+    </div>
+    <div class="fb-grid">
+      ${renderFeedbackBlock(m.name, 'strong', '💪 Что делает хорошо')}
+      ${renderFeedbackBlock(m.name, 'recommendation', '🎯 Точки роста')}
+    </div>
+  `;
+  
+  // Competencies
+  document.getElementById('tab-competencies').innerHTML = `
+    <div class="mod-comp-grid">
+      ${COMPETENCIES.map(comp => {
+        const pct = pctForGroup(m.calls_period, comp.params);
+        const pctStr = pct !== null ? pct + '%' : '—';
+        const barWidth = pct !== null ? pct : 0;
+        const detail = pct === null ? 'нет применимых данных за период' : detailForCompetence(comp, pct);
+        return `
+          <div class="mod-comp">
+            <div class="mod-comp-name">${comp.name}</div>
+            <div class="mod-comp-values">
+              <div class="mod-comp-now">${pctStr}</div>
+            </div>
+            <div class="mod-comp-bar"><div class="mod-comp-bar-fill" style="width: ${barWidth}%"></div></div>
+            <div class="mod-comp-detail">${detail}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  
+  // Calls tab
+  const callsSorted = m.calls_period.slice().sort((a,b) => new Date(b.call_date) - new Date(a.call_date));
+  document.getElementById('tab-calls').innerHTML = `
+    <table class="calls-table">
+      <thead>
+        <tr><th>Дата</th><th>Тип</th><th>Балл</th><th>Ключевое</th><th>Транскрипт</th></tr>
+      </thead>
+      <tbody>
+        ${callsSorted.map(c => {
+          const pct = Math.round((parseFloat(c.pct_score) || 0) * 100);
+          const pillClass = pct >= 80 ? 'high' : pct >= 60 ? 'mid' : 'low';
+          return `
+            <tr>
+              <td>${formatCallDate(c.call_date)}</td>
+              <td><span class="call-type">${escapeHtml(c.call_type || '—')}</span></td>
+              <td><span class="call-score-pill ${pillClass}">${pct}%</span></td>
+              <td>${escapeHtml((c.call_summary || '').slice(0, 80))}...</td>
+              <td><a href="${escapeAttr(c.transcript_url || '#')}" target="_blank" style="color: var(--accent); font-size: 12px;">открыть</a></td>
+            </tr>
+          `;
+        }).join('') || '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--text-muted);">Нет звонков за период</td></tr>'}
+      </tbody>
+    </table>
+    <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-muted);">
+      Показано ${callsSorted.length} ${pluralize(callsSorted.length, 'звонок','звонка','звонков')} за период
+    </div>
+  `;
+  
+  // Plan tab
+  const managerRecs = getManagerTopRecs(m.name, 5);
+  document.getElementById('tab-plan').innerHTML = `
+    <div style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px;">
+      <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px;">
+        Приоритеты работы с ${escapeHtml(m.name)} на следующие 4 недели — по частоте рекомендаций мастера и AI-агента:
+      </div>
+      ${managerRecs.map((r, i) => `
+        <div class="fb-item" style="border-bottom: 1px solid var(--border); padding: 12px 0;">
+          <small style="color: var(--brand); font-weight: 700; font-size: 14px; min-width: 24px;">${i+1}</small>
+          <span><b>${escapeHtml(r.text)}</b><br><small style="color: var(--text-muted);">Упоминается ${r.count} раз в разборах</small></span>
+        </div>
+      `).join('') || '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Разборы пока не собраны</div>'}
+    </div>
+  `;
+  
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  switchTab('overview');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.modal-tab[data-tab="${name}"]`)?.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function renderFeedbackBlock(manager, type, title) {
+  const items = (rawData.calls_feedback || [])
+    .filter(f => f.manager === manager && f.feedback_type === type)
+    .sort((a,b) => new Date(b.call_date) - new Date(a.call_date))
+    .slice(0, 5);
+  
+  const cls = type === 'strong' ? 'fb-strong' : 'fb-rec';
+  const itemsHtml = items.map(i => {
+    const date = formatCallDate(i.call_date);
+    return `<div class="fb-item"><small>${date}</small><span>${escapeHtml(i.feedback_text)}</span></div>`;
+  }).join('') || '<div class="fb-item"><span style="color: var(--text-muted);">Пока нет данных</span></div>';
+  
+  return `<div class="fb-block ${cls}"><div class="fb-title">${title}</div>${itemsHtml}</div>`;
+}
+
+function getManagerTopRecs(manager, limit) {
+  const recs = (rawData.calls_feedback || []).filter(f => f.manager === manager && f.feedback_type === 'recommendation');
+  const groups = {};
+  recs.forEach(r => {
+    const text = String(r.feedback_text || '');
+    const key = text.slice(0, 40).toLowerCase();
+    if (!groups[key]) groups[key] = { text, count: 0 };
+    groups[key].count++;
+  });
+  return Object.values(groups).sort((a,b) => b.count - a.count).slice(0, limit);
+}
+
+// =============================
+// УТИЛИТЫ
+// =============================
+function formatCallDate(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+  } catch { return '—'; }
+}
+
+function getInitials(name) {
+  return String(name).split(/\s+/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function periodLabel(p) {
+  return {week:'за неделю', month:'за месяц', quarter:'за квартал', all:'за всё время'}[p] || '';
+}
+
+function pluralize(n, one, few, many) {
+  const mod10 = n % 10, mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
+function callTypeBreakdown(calls) {
+  const types = {};
+  calls.forEach(c => types[c.call_type] = (types[c.call_type] || 0) + 1);
+  return Object.entries(types).map(([k, v]) => `${k}: ${v}`).join(', ') || '—';
+}
+
+function getStageDescription(code) {
+  const desc = {
+    s1: 'Стадия «Отрицание» — менеджер не признаёт зоны роста или сопротивляется методологии. Работа мастера сфокусирована на осознании ценности изменений.',
+    s2: 'Стадия «Осознание» — менеджер признаёт зоны роста, но пока не применяет новое поведение в звонках регулярно. Задача — начать применять техники под контролем мастера.',
+    s3: 'Стадия «Имитация» — менеджер активно применяет новые техники, но нестабильно. Возможны откаты к старым паттернам. Обычно переход в интеграцию — ещё 4–6 недель.',
+    s4: 'Стадия «Интеграция» — новое поведение стало нормой. Работа мастера смещается на поддержание и точечное развитие сложных навыков (возражения, глубокое выявление).'
+  };
+  return desc[code] || '—';
+}
+
+function detailForCompetence(comp, pct) {
+  if (pct >= 90) return `${pct}% — вышло на автоматизм`;
+  if (pct >= 75) return `${pct}% — стабильно применяется`;
+  if (pct >= 50) return `${pct}% — точка роста, работаем`;
+  return `${pct}% — критическая зона`;
+}
+
+function populateManagerFilter() {
+  const sel = document.getElementById('managerFilter');
+  const managers = allManagers();
+  sel.innerHTML = `<option value="all">Вся команда (${managers.length})</option>` + 
+    managers.map(m => `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`).join('');
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/`/g, ''); }
+
+// =============================
+// UI HANDLERS
+// =============================
+function toggleExpand() {
+  document.getElementById('expandToggle').classList.toggle('open');
+  document.getElementById('expandBody').classList.toggle('open');
+}
+
+// Фильтры pills
+document.addEventListener('click', (e) => {
+  const pill = e.target.closest('.filter-pill');
+  if (!pill) return;
+  const group = pill.parentElement;
+  const key = group.dataset.filter;
+  group.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  pill.classList.add('active');
+  filters[key] = pill.dataset.val;
+  render();
+});
+
+document.getElementById('managerFilter').addEventListener('change', (e) => {
+  filters.manager = e.target.value;
+  if (e.target.value !== 'all') openManager(e.target.value);
+  render();
+});
+
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// Автостарт
+loadData();
+</script>
+
+</body>
+</html>
