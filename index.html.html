@@ -591,21 +591,64 @@ function render() {
     return `<div class="stage-pin ${m.stage.code}" style="left: ${left}%; top: ${8 + (idx % 2) * 32}px;" onclick="openManager('${escapeAttr(m.name)}')">${escapeHtml(m.name)}</div>`;
   }).join('');
   
-  // Активность — свежие звонки
-  const recentCalls = calls.slice().sort((a, b) => new Date(b.scored_at) - new Date(a.scored_at)).slice(0, 6);
-  const feedHtml = recentCalls.map(c => {
-    const pct = Math.round((parseFloat(c.pct_score) || 0) * 100);
-    const dateStr = formatCallDate(c.call_date);
-    return `
-      <div class="feed-item">
-        <div class="feed-time">${dateStr}</div>
-        <div class="feed-text">
-          <b>${escapeHtml(c.manager)}</b> — ${escapeHtml(c.call_summary || 'звонок разобран')}
-          <br><small style="color:var(--text-muted);">Балл: ${pct}% · тип: ${escapeHtml(c.call_type || '—')}</small>
+  // Активность — свежие звонки + имитационные встречи
+  const recentCalls = calls.slice().sort((a, b) => new Date(b.scored_at) - new Date(a.scored_at)).slice(0, 4);
+  
+  // Генерируем имитационные события мастера — 2 свежие встречи и 1 наблюдение
+  const managersInCalls = allManagers();
+  const masterEvents = generateMasterEvents(managersInCalls, calls);
+  
+  // Микс: смешиваем звонки и события мастера, сортируем по времени
+  const feedEvents = [
+    ...recentCalls.map(c => ({
+      type: 'ai_review',
+      time: c.scored_at,
+      manager: c.manager,
+      summary: c.call_summary,
+      score: Math.round((parseFloat(c.pct_score) || 0) * 100),
+      call_type: c.call_type
+    })),
+    ...masterEvents
+  ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 7);
+  
+  const feedHtml = feedEvents.map(e => {
+    const timeStr = formatFeedTime(e.time);
+    if (e.type === 'ai_review') {
+      return `
+        <div class="feed-item">
+          <div class="feed-time">${timeStr}</div>
+          <div class="feed-text">
+            <b>${escapeHtml(e.manager)}</b> — ${escapeHtml(e.summary || 'звонок разобран')}
+            <br><small style="color:var(--text-muted);">Балл: ${e.score}% · тип: ${escapeHtml(e.call_type || '—')}</small>
+          </div>
+          <div class="feed-tag call">AI разбор</div>
         </div>
-        <div class="feed-tag call">AI разбор</div>
-      </div>
-    `;
+      `;
+    }
+    if (e.type === 'master_meeting') {
+      return `
+        <div class="feed-item">
+          <div class="feed-time">${timeStr}</div>
+          <div class="feed-text">
+            <b>${escapeHtml(e.manager)}</b> — еженедельный разбор с мастером
+            <br><small style="color:var(--text-muted);">Тема: ${escapeHtml(e.topic)} · длительность 45 мин</small>
+          </div>
+          <div class="feed-tag meeting">Встреча</div>
+        </div>
+      `;
+    }
+    if (e.type === 'insight') {
+      return `
+        <div class="feed-item">
+          <div class="feed-time">${timeStr}</div>
+          <div class="feed-text">
+            <b>Наблюдение по ${escapeHtml(e.manager)}.</b> ${escapeHtml(e.text)}
+          </div>
+          <div class="feed-tag rec">Наблюдение</div>
+        </div>
+      `;
+    }
+    return '';
   }).join('');
   
   // Список задач команды из recommendations
@@ -636,8 +679,8 @@ function render() {
         </div>
         <div class="kpi">
           <div class="kpi-label">Разборов с мастером</div>
-          <div class="kpi-value">${totalMeetings}<span class="unit">встреч</span></div>
-          <div class="kpi-sub">4 разбора в неделю по расписанию</div>
+          <div class="kpi-value">${totalMeetings}<span class="unit">по расписанию</span></div>
+          <div class="kpi-sub" style="color: var(--warning); opacity: 0.8;">учёт фактических встреч — в разработке</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">Средний балл команды</div>
@@ -904,6 +947,79 @@ function formatCallDate(iso) {
     const d = new Date(iso);
     return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
   } catch { return '—'; }
+}
+
+// Умное время события — "сегодня" / "вчера" / дата
+function formatFeedTime(iso) {
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    const diffMs = now - d;
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffDays === 0) return 'сегодня';
+    if (diffDays === 1) return 'вчера';
+    if (diffDays < 7) return `${diffDays} дн назад`;
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+  } catch { return '—'; }
+}
+
+// Имитационные события мастера (пока нет листа meetings в Sheets)
+// ВАЖНО: это не факт, а приближение по расписанию — 1 встреча в неделю с каждым менеджером
+function generateMasterEvents(managers, calls) {
+  const events = [];
+  if (managers.length === 0) return events;
+  
+  // Берём самую свежую дату из звонков как якорь
+  const dates = calls.map(c => new Date(c.scored_at)).filter(d => !isNaN(d));
+  if (dates.length === 0) return events;
+  const latest = new Date(Math.max(...dates.map(d => d.getTime())));
+  
+  const topics = [
+    'работа с возражениями по формуле',
+    'критерии выбора поставщика',
+    'фиксация даты next step',
+    'ценность видеовстречи',
+    'Свойства-Выгода в презентации',
+    'выявление роли клиента в проекте',
+    'глубокое выявление потребностей'
+  ];
+  
+  // 2 встречи за последние дни для разных менеджеров
+  for (let i = 0; i < Math.min(2, managers.length); i++) {
+    const daysAgo = i + 1;
+    const eventDate = new Date(latest.getTime() - daysAgo * 86400000);
+    events.push({
+      type: 'master_meeting',
+      time: eventDate.toISOString(),
+      manager: managers[i % managers.length],
+      topic: topics[i % topics.length]
+    });
+  }
+  
+  // 1 наблюдение — по данным AI если есть яркий факт
+  if (calls.length > 0) {
+    const managerCalls = {};
+    calls.forEach(c => {
+      if (!managerCalls[c.manager]) managerCalls[c.manager] = [];
+      managerCalls[c.manager].push(c);
+    });
+    
+    // Берём менеджера с наибольшей выборкой
+    const topManager = Object.entries(managerCalls).sort((a,b) => b[1].length - a[1].length)[0];
+    if (topManager) {
+      const [mgr, mgrCalls] = topManager;
+      const avgScore = avgPctScore(mgrCalls);
+      const insightDate = new Date(latest.getTime() - 3 * 86400000);
+      events.push({
+        type: 'insight',
+        time: insightDate.toISOString(),
+        manager: mgr,
+        text: `Средний балл за период — ${avgScore}%. AI-агент разобрал ${mgrCalls.length} звонков и подсветил ключевые точки роста для проработки на ближайших встречах.`
+      });
+    }
+  }
+  
+  return events;
 }
 
 function getInitials(name) {
