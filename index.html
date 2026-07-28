@@ -443,6 +443,62 @@ body {
   border-radius: 10px;
 }
 
+/* Динамика маркеров */
+.dynamics-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.dynamics-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+}
+.dynamics-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.dynamics-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.dynamics-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.legend-swatch {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+}
+.dynamics-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  background: var(--card-2);
+  border-radius: 8px;
+}
+.dynamics-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.dynamics-svg { display: block; width: 100%; height: auto; }
+
 @media (max-width: 1200px) {
   .two-col { grid-template-columns: 1fr; }
   .manager-row { grid-template-columns: 40px 1fr 120px 80px 80px; }
@@ -1177,6 +1233,7 @@ function renderPortraitTab(name, meetingData) {
   
   const latest = meetingData.latest_meeting;
   const details = meetingData.details;
+  const allMeetings = meetingData.scored.slice().sort((a,b) => new Date(a.meeting_date) - new Date(b.meeting_date));
   
   // Категории
   const catsHtml = Object.entries(CATEGORY_INFO).map(([code, info]) => {
@@ -1197,7 +1254,10 @@ function renderPortraitTab(name, meetingData) {
   // Радар
   const radarHtml = renderRadarSvg(latest);
   
-  // Детальные маркеры (свернуто по умолчанию)
+  // Динамика
+  const dynamicsHtml = renderDynamicsBlock(allMeetings);
+  
+  // Детальные маркеры
   const markersHtml = Array.from({length: 18}, (_, i) => i+1).map(i => {
     const key = `m${i}`;
     const score = latest[key];
@@ -1213,7 +1273,7 @@ function renderPortraitTab(name, meetingData) {
     `;
   }).join('');
   
-  // Блоки из details
+  // Блоки
   const strengthsArr = details ? parseJsonSafe(details.strengths, []) : [];
   const growthArr = details ? parseJsonSafe(details.growth_areas, []) : [];
   const topicsArr = details ? parseJsonSafe(details.topics_covered, []) : [];
@@ -1227,6 +1287,8 @@ function renderPortraitTab(name, meetingData) {
       <div class="portrait-title">Портрет · последняя встреча ${formatCallDate(latest.meeting_date)}</div>
       <div class="portrait-text">${escapeHtml(portraitText)}</div>
     </div>
+    
+    ${dynamicsHtml}
     
     <div class="portrait-grid">
       <div class="portrait-radar-block">
@@ -1270,6 +1332,119 @@ function renderPortraitTab(name, meetingData) {
       ${markersHtml}
     </div>
   `;
+}
+
+// Рендер блока динамики
+function renderDynamicsBlock(meetings) {
+  if (!meetings || meetings.length === 0) return '';
+  
+  if (meetings.length === 1) {
+    return `
+      <div class="dynamics-block">
+        <div class="dynamics-head">
+          <div>
+            <div class="dynamics-title">Динамика по категориям</div>
+            <div class="dynamics-sub">Как менеджер меняется от встречи к встрече</div>
+          </div>
+        </div>
+        <div class="dynamics-empty">
+          Динамика появится после следующей встречи, когда будут данные для сравнения.<br>
+          <small style="color: var(--text-muted);">Сейчас загружена ${meetings.length} встреча.</small>
+        </div>
+      </div>
+    `;
+  }
+  
+  const svgHtml = renderDynamicsSvg(meetings);
+  
+  const legendItems = [
+    { key: 'A', color: '#3b82f6', name: 'Отношение к методологии' },
+    { key: 'B', color: '#10b981', name: 'Ответственность' },
+    { key: 'C', color: '#f59e0b', name: 'Психология' },
+    { key: 'D', color: '#d4b26a', name: 'Продукт и клиенты' },
+    { key: 'E', color: '#ef4444', name: 'Дисциплина' }
+  ];
+  const legendHtml = legendItems.map(l => 
+    `<div class="legend-item"><div class="legend-swatch" style="background:${l.color}"></div>${l.name}</div>`
+  ).join('');
+  
+  return `
+    <div class="dynamics-block">
+      <div class="dynamics-head">
+        <div>
+          <div class="dynamics-title">Динамика по категориям</div>
+          <div class="dynamics-sub">${meetings.length} встреч, от ${formatCallDate(meetings[0].meeting_date)} до ${formatCallDate(meetings[meetings.length-1].meeting_date)}</div>
+        </div>
+      </div>
+      <div class="dynamics-svg-wrap">
+        ${svgHtml}
+      </div>
+      <div class="dynamics-legend">${legendHtml}</div>
+    </div>
+  `;
+}
+
+// SVG график динамики
+function renderDynamicsSvg(meetings) {
+  const w = 800;
+  const h = 260;
+  const padTop = 20;
+  const padBottom = 40;
+  const padLeft = 30;
+  const padRight = 20;
+  const chartW = w - padLeft - padRight;
+  const chartH = h - padTop - padBottom;
+  const n = meetings.length;
+  
+  const categories = [
+    { key: 'category_A', color: '#3b82f6' },
+    { key: 'category_B', color: '#10b981' },
+    { key: 'category_C', color: '#f59e0b' },
+    { key: 'category_D', color: '#d4b26a' },
+    { key: 'category_E', color: '#ef4444' }
+  ];
+  
+  // Горизонтальные линии сетки 0, 2, 4, 6, 8, 10
+  const gridLines = [];
+  for (let v = 0; v <= 10; v += 2) {
+    const y = padTop + chartH - (v / 10) * chartH;
+    gridLines.push(`<line x1="${padLeft}" y1="${y}" x2="${w - padRight}" y2="${y}" stroke="#2a2f3a" stroke-width="0.5"/>`);
+    gridLines.push(`<text x="${padLeft - 6}" y="${y + 3}" font-size="10" fill="#6b7280" text-anchor="end">${v}</text>`);
+  }
+  
+  // Подписи дат по оси X
+  const dateLabels = meetings.map((m, i) => {
+    const x = n === 1 ? padLeft + chartW/2 : padLeft + (i / (n-1)) * chartW;
+    const date = formatCallDate(m.meeting_date);
+    return `<text x="${x}" y="${h - padBottom + 16}" font-size="10" fill="#9ba3ae" text-anchor="middle">${date}</text>`;
+  }).join('');
+  
+  // Линии категорий
+  const catLines = categories.map(cat => {
+    const points = meetings.map((m, i) => {
+      const x = n === 1 ? padLeft + chartW/2 : padLeft + (i / (n-1)) * chartW;
+      const val = Number(m[cat.key]);
+      const y = isNaN(val) ? padTop + chartH : padTop + chartH - (val / 10) * chartH;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    
+    const pathD = 'M ' + points.join(' L ');
+    const circles = points.map(p => {
+      const [x,y] = p.split(',');
+      return `<circle cx="${x}" cy="${y}" r="4" fill="${cat.color}" stroke="#171b22" stroke-width="2"/>`;
+    }).join('');
+    
+    return `
+      <path d="${pathD}" fill="none" stroke="${cat.color}" stroke-width="2.5" stroke-linejoin="round"/>
+      ${circles}
+    `;
+  }).join('');
+  
+  return `<svg class="dynamics-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+    ${gridLines.join('')}
+    ${catLines}
+    ${dateLabels}
+  </svg>`;
 }
 
 function renderFeedbackBlock(manager, type, title) {
