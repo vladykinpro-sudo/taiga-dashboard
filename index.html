@@ -33,6 +33,89 @@ body {
   line-height: 1.5;
 }
 
+/* Экран логина */
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(circle at 30% 20%, rgba(212, 178, 106, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+              var(--bg);
+}
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 40px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+.login-brand {
+  font-size: 12px;
+  letter-spacing: 4px;
+  color: var(--brand);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.login-title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+}
+.login-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.login-card input {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.login-card input:focus { border-color: var(--accent); }
+.login-card input:disabled { opacity: 0.5; }
+.login-card button {
+  background: var(--accent);
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+.login-card button:hover { background: #2563eb; }
+.login-error {
+  font-size: 12px;
+  color: var(--danger);
+  min-height: 16px;
+  margin-top: 4px;
+}
+.login-hint {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .topbar {
   position: sticky; top: 0; z-index: 100;
   background: var(--bg-2); border-bottom: 1px solid var(--border);
@@ -787,7 +870,18 @@ body {
 // =============================
 // КОНФИГ
 // =============================
-const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=x9k2m7q4w8n5r1t3';
+
+// Хеши разрешённых паролей (SHA-256)
+const ALLOWED_PASSWORD_HASHES = {
+  '691b237c77aa6d1fbdc27e73dc5eaf941ec0b51499a93fb84a2d1257acbf9d5d': 'Артём Владыкин',
+  '419ee887057f4dc875e54c8b7a0b43caeb69d2d00c653f4dccf773577894e6cc': 'Артём Сорокин · Тайга',
+  '6b08039c2f2a6d91317a1192e98032ec93aadd689575508b61d632b43877488e': 'Анастасия Романова'
+};
+
+// Ключ для сессии в localStorage
+const SESSION_KEY = 'vp_dashboard_session';
+const SESSION_TTL_DAYS = 30;
 
 // Клиентские компетенции — группируем 39 параметров в 6 понятных блоков
 const COMPETENCIES = [
@@ -2008,8 +2102,112 @@ document.getElementById('modalAllMeetings').addEventListener('click', (e) => {
   if (e.target.id === 'modalAllMeetings') closeAllMeetings();
 });
 
-// Автостарт
-loadData();
+// =============================
+// АВТОРИЗАЦИЯ
+// =============================
+async function sha256(str) {
+  const buffer = new TextEncoder().encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function getSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    if (Date.now() > session.expiresAt) {
+      localStorage.removeItem(SESSION_KEY);
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
+}
+
+function setSession(userName) {
+  const session = {
+    userName,
+    expiresAt: Date.now() + SESSION_TTL_DAYS * 86400 * 1000
+  };
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+async function tryLogin(password) {
+  const hash = await sha256(password);
+  const userName = ALLOWED_PASSWORD_HASHES[hash];
+  if (userName) {
+    setSession(userName);
+    return userName;
+  }
+  return null;
+}
+
+function showLoginScreen() {
+  document.body.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-brand">VLADYKIN.PRO</div>
+        <div class="login-title">Мастерская продаж</div>
+        <div class="login-sub">Введите пароль для доступа к аналитике</div>
+        <form id="loginForm" onsubmit="event.preventDefault(); handleLogin();">
+          <input type="password" id="loginInput" placeholder="Пароль" autocomplete="current-password" autofocus>
+          <button type="submit">Войти</button>
+          <div class="login-error" id="loginError"></div>
+        </form>
+        <div class="login-hint">Пароль выдан администратором. Если забыли — свяжитесь с представителем VLADYKIN.PRO.</div>
+      </div>
+    </div>
+  `;
+}
+
+async function handleLogin() {
+  const input = document.getElementById('loginInput');
+  const err = document.getElementById('loginError');
+  const password = input.value.trim();
+  if (!password) return;
+  
+  input.disabled = true;
+  err.textContent = '';
+  
+  const userName = await tryLogin(password);
+  if (userName) {
+    location.reload();
+  } else {
+    err.textContent = 'Неверный пароль. Проверьте раскладку клавиатуры.';
+    input.disabled = false;
+    input.value = '';
+    input.focus();
+  }
+}
+
+// Проверка авторизации при старте
+const session = getSession();
+if (!session) {
+  showLoginScreen();
+} else {
+  // Показать имя пользователя в шапке и стартовать
+  document.addEventListener('DOMContentLoaded', () => {
+    const userBlock = document.createElement('div');
+    userBlock.style.cssText = 'display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim);';
+    userBlock.innerHTML = `
+      <span>${escapeHtml(session.userName)}</span>
+      <button onclick="clearSession()" style="background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">Выйти</button>
+    `;
+    const topRight = document.querySelector('.topbar-right');
+    if (topRight) topRight.appendChild(userBlock);
+  });
+  
+  // Автостарт основного дашборда
+  loadData();
+}
 </script>
 
 </body>
