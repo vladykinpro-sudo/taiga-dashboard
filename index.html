@@ -171,7 +171,7 @@ body {
   transition: all 0.15s; user-select: none;
 }
 .filter-pill:hover { background: var(--card-hover); color: var(--text); }
-.filter-pill.active { background: var(--accent); border-color: var(--accent); color: white; }
+.filter-pill.active { background: #3b82f6; border-color: #3b82f6; color: white; }
 .filter-select {
   background: var(--card); border: 1px solid var(--border); color: var(--text);
   padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; min-width: 200px;
@@ -312,7 +312,7 @@ body {
 .stage-badge.s4 .dot { background: var(--stage-4); }
 .manager-score { font-size: 18px; font-weight: 600; }
 .mini-chart { height: 32px; display: flex; align-items: flex-end; gap: 3px; }
-.mini-bar { flex: 1; background: var(--accent); border-radius: 2px; opacity: 0.7; min-height: 4px; }
+.mini-bar { flex: 1; background: #3b82f6; border-radius: 2px; opacity: 0.7; min-height: 4px; }
 .mini-bar:last-child { opacity: 1; }
 .mini-chart-wrap { display: flex; flex-direction: column; gap: 4px; }
 .mini-chart-label {
@@ -371,14 +371,11 @@ body {
 }
 .team-profile-svg-wrap {
   width: 100%;
-  overflow-x: auto;
 }
 .team-profile-svg {
   display: block;
   width: 100%;
-  height: auto;
-  min-width: 600px;
-  max-height: 300px;
+  height: 300px;
 }
 .team-profile-empty {
   text-align: center;
@@ -407,7 +404,7 @@ body {
   text-transform: uppercase; letter-spacing: 1px; font-weight: 600;
 }
 .feed-tag.call { background: rgba(59,130,246,0.15); color: var(--accent); }
-.feed-tag.meeting { background: rgba(212,178,106,0.15); color: var(--brand); }
+.feed-tag.meeting { background: rgba(255,255,255,0.08); color: var(--text); }
 .feed-tag.strong { background: rgba(16,185,129,0.15); color: var(--success); }
 .feed-tag.rec { background: rgba(245,158,11,0.15); color: var(--warning); }
 
@@ -1142,7 +1139,7 @@ function render() {
   const topRecs = getTopRecommendations(5);
   const tasksHtml = topRecs.map((r, i) => `
     <div class="feed-item">
-      <div class="feed-time" style="color: var(--brand); font-weight: 600;">${i+1}</div>
+      <div class="feed-time" style="color: var(--text); font-weight: 700;">${i+1}</div>
       <div class="feed-text"><b>${escapeHtml(r.text)}</b><br><small style="color:var(--text-muted);">Упоминается в ${r.count} звонках</small></div>
     </div>
   `).join('') || '<div style="text-align:center; color:var(--text-muted); padding: 20px;">Задачи собираются по мере разбора звонков</div>';
@@ -1363,7 +1360,7 @@ function renderTeamProfileSvg(managers, allCalls) {
     `;
   }).join('');
   
-  return `<svg class="team-profile-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+  return `<svg class="team-profile-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
     ${gridY}
     ${stageAxes}
     ${leftAxis}
