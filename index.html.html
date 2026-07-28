@@ -309,6 +309,140 @@ body {
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
+/* Психологический портрет */
+.portrait-hero {
+  background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(16,185,129,0.05));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.portrait-title { font-size: 12px; letter-spacing: 2px; color: var(--brand); text-transform: uppercase; margin-bottom: 8px; }
+.portrait-text { font-size: 15px; line-height: 1.7; color: var(--text); }
+.stage-combined {
+  display: flex;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.stage-src { flex: 1; }
+.stage-src-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.stage-src-value { font-size: 16px; font-weight: 600; margin-top: 4px; }
+.stage-src-value.s1 { color: var(--stage-1); }
+.stage-src-value.s2 { color: var(--stage-2); }
+.stage-src-value.s3 { color: var(--stage-3); }
+.stage-src-value.s4 { color: var(--stage-4); }
+
+.portrait-grid {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.portrait-radar-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+.portrait-cats {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+.cat-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cat-row:last-child { border-bottom: none; }
+.cat-row-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.cat-name { font-size: 14px; font-weight: 500; }
+.cat-value { font-size: 20px; font-weight: 600; }
+.cat-value.low { color: var(--danger); }
+.cat-value.mid { color: var(--warning); }
+.cat-value.high { color: var(--success); }
+.cat-bar { height: 6px; background: var(--card-2); border-radius: 3px; overflow: hidden; }
+.cat-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.cat-bar-fill.low { background: var(--danger); }
+.cat-bar-fill.mid { background: var(--warning); }
+.cat-bar-fill.high { background: var(--success); }
+.cat-desc { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+.markers-detail {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.markers-detail-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; }
+.marker-item {
+  display: grid;
+  grid-template-columns: 60px 200px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  font-size: 12px;
+}
+.marker-item:last-child { border-bottom: none; }
+.marker-score {
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.marker-score.low { background: rgba(239,68,68,0.15); color: var(--danger); }
+.marker-score.mid { background: rgba(245,158,11,0.15); color: var(--warning); }
+.marker-score.high { background: rgba(16,185,129,0.15); color: var(--success); }
+.marker-score.na { background: var(--card-2); color: var(--text-muted); }
+.marker-name { color: var(--text-dim); }
+.marker-evidence { color: var(--text-muted); font-style: italic; font-size: 11px; }
+
+.portrait-blocks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.p-block {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+.p-block-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+.p-block-strong .p-block-title { color: var(--success); }
+.p-block-growth .p-block-title { color: var(--warning); }
+.p-block-resistance .p-block-title { color: var(--danger); }
+.p-block-focus .p-block-title { color: var(--accent); }
+.p-block-content { font-size: 13px; line-height: 1.6; color: var(--text-dim); }
+.p-block-list { list-style: none; padding: 0; margin: 0; }
+.p-block-list li {
+  padding: 6px 0 6px 20px;
+  position: relative;
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.p-block-list li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--brand);
+}
+.no-portrait {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
 @media (max-width: 1200px) {
   .two-col { grid-template-columns: 1fr; }
   .manager-row { grid-template-columns: 40px 1fr 120px 80px 80px; }
@@ -371,12 +505,14 @@ body {
     </div>
     <div class="modal-tabs">
       <button class="modal-tab active" data-tab="overview" onclick="switchTab('overview')">Обзор</button>
+      <button class="modal-tab" data-tab="portrait" onclick="switchTab('portrait')">Психологический портрет</button>
       <button class="modal-tab" data-tab="competencies" onclick="switchTab('competencies')">Компетенции</button>
       <button class="modal-tab" data-tab="calls" onclick="switchTab('calls')">Звонки</button>
       <button class="modal-tab" data-tab="plan" onclick="switchTab('plan')">План работы</button>
     </div>
     <div class="modal-body" id="modalBody">
       <div class="tab-panel active" id="tab-overview"></div>
+      <div class="tab-panel" id="tab-portrait"></div>
       <div class="tab-panel" id="tab-competencies"></div>
       <div class="tab-panel" id="tab-calls"></div>
       <div class="tab-panel" id="tab-plan"></div>
@@ -568,8 +704,7 @@ function render() {
   
   // KPI команды
   const totalCalls = calls.length;
-  const meetingsPerManager = 4; // приближение — 1 разбор в неделю
-  const totalMeetings = managers.length * meetingsPerManager;
+  const totalMeetings = (rawData.meetings_scored || []).length;
   const teamAvg = avgPctScore(calls);
   
   // Распределение по стадиям
@@ -591,32 +726,37 @@ function render() {
     return `<div class="stage-pin ${m.stage.code}" style="left: ${left}%; top: ${8 + (idx % 2) * 32}px;" onclick="openManager('${escapeAttr(m.name)}')">${escapeHtml(m.name)}</div>`;
   }).join('');
   
-  // Активность — свежие звонки + имитационные встречи
-  const recentCalls = calls.slice().sort((a, b) => new Date(b.scored_at) - new Date(a.scored_at)).slice(0, 4);
+  // Активность — микс звонков и встреч
+  const callEvents = calls.map(c => ({
+    type: 'call',
+    time: c.scored_at,
+    date: c.call_date,
+    manager: c.manager,
+    summary: c.call_summary,
+    score: Math.round((parseFloat(c.pct_score) || 0) * 100),
+    call_type: c.call_type
+  }));
   
-  // Генерируем имитационные события мастера — 2 свежие встречи и 1 наблюдение
-  const managersInCalls = allManagers();
-  const masterEvents = generateMasterEvents(managersInCalls, calls);
+  const meetingEvents = (rawData.meetings_scored || []).map(m => ({
+    type: 'meeting',
+    time: m.scored_at,
+    date: m.meeting_date,
+    manager: m.manager,
+    key_insight: m.key_insight,
+    stage: m.stage_calculated,
+    duration: m.duration_min
+  }));
   
-  // Микс: смешиваем звонки и события мастера, сортируем по времени
-  const feedEvents = [
-    ...recentCalls.map(c => ({
-      type: 'ai_review',
-      time: c.scored_at,
-      manager: c.manager,
-      summary: c.call_summary,
-      score: Math.round((parseFloat(c.pct_score) || 0) * 100),
-      call_type: c.call_type
-    })),
-    ...masterEvents
-  ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 7);
+  const allEvents = [...callEvents, ...meetingEvents]
+    .sort((a,b) => new Date(b.time) - new Date(a.time))
+    .slice(0, 8);
   
-  const feedHtml = feedEvents.map(e => {
-    const timeStr = formatFeedTime(e.time);
-    if (e.type === 'ai_review') {
+  const feedHtml = allEvents.map(e => {
+    const dateStr = formatCallDate(e.date);
+    if (e.type === 'call') {
       return `
         <div class="feed-item">
-          <div class="feed-time">${timeStr}</div>
+          <div class="feed-time">${dateStr}</div>
           <div class="feed-text">
             <b>${escapeHtml(e.manager)}</b> — ${escapeHtml(e.summary || 'звонок разобран')}
             <br><small style="color:var(--text-muted);">Балл: ${e.score}% · тип: ${escapeHtml(e.call_type || '—')}</small>
@@ -624,31 +764,18 @@ function render() {
           <div class="feed-tag call">AI разбор</div>
         </div>
       `;
-    }
-    if (e.type === 'master_meeting') {
+    } else {
       return `
         <div class="feed-item">
-          <div class="feed-time">${timeStr}</div>
+          <div class="feed-time">${dateStr}</div>
           <div class="feed-text">
-            <b>${escapeHtml(e.manager)}</b> — еженедельный разбор с мастером
-            <br><small style="color:var(--text-muted);">Тема: ${escapeHtml(e.topic)} · длительность 45 мин</small>
+            <b>${escapeHtml(e.manager)}</b> — встреча с мастером${e.duration ? ' (' + e.duration + ' мин)' : ''}
+            <br><small style="color:var(--text-muted);">${escapeHtml(e.key_insight || 'разбор проведён')} · стадия: ${escapeHtml(e.stage || '—')}</small>
           </div>
           <div class="feed-tag meeting">Встреча</div>
         </div>
       `;
     }
-    if (e.type === 'insight') {
-      return `
-        <div class="feed-item">
-          <div class="feed-time">${timeStr}</div>
-          <div class="feed-text">
-            <b>Наблюдение по ${escapeHtml(e.manager)}.</b> ${escapeHtml(e.text)}
-          </div>
-          <div class="feed-tag rec">Наблюдение</div>
-        </div>
-      `;
-    }
-    return '';
   }).join('');
   
   // Список задач команды из recommendations
@@ -679,8 +806,8 @@ function render() {
         </div>
         <div class="kpi">
           <div class="kpi-label">Разборов с мастером</div>
-          <div class="kpi-value">${totalMeetings}<span class="unit">по расписанию</span></div>
-          <div class="kpi-sub" style="color: var(--warning); opacity: 0.8;">учёт фактических встреч — в разработке</div>
+          <div class="kpi-value">${totalMeetings}<span class="unit">встреч</span></div>
+          <div class="kpi-sub">${totalMeetings > 0 ? 'проанализировано AI-агентом' : 'ждём первых загрузок'}</div>
         </div>
         <div class="kpi">
           <div class="kpi-label">Средний балл команды</div>
@@ -745,7 +872,8 @@ function render() {
 function renderManagerRow(m) {
   const initials = getInitials(m.name);
   const avgStr = m.avg_score !== null ? m.avg_score + '%' : '—';
-  const activityStr = `${m.count_period} ${pluralize(m.count_period, 'звонок','звонка','звонков')} · 4 разбора`;
+  const meetingsCount = (rawData.meetings_scored || []).filter(x => x.manager === m.name).length;
+  const activityStr = `${m.count_period} ${pluralize(m.count_period, 'звонок','звонка','звонков')} · ${meetingsCount} ${pluralize(meetingsCount, 'разбор','разбора','разборов')}`;
   
   // Мини-график — последние 6 звонков по хронологии
   const sorted = m.calls_all.slice().sort((a,b) => new Date(a.call_date) - new Date(b.call_date));
@@ -788,18 +916,33 @@ function getTopRecommendations(limit) {
 // =============================
 function openManager(name) {
   const m = managerStats(name);
+  const meetingData = getMeetingsData(name);
+  
   document.getElementById('modalName').textContent = m.name;
   document.getElementById('modalRole').textContent = `Компания «${m.company}» · Стадия: ${m.stage.name}`;
   
-  // Overview
+  // Overview с комбинированной стадией
   const stageText = getStageDescription(m.stage.code);
+  const meetingStageInfo = meetingData.latest_meeting ? 
+    `<div class="stage-combined">
+      <div class="stage-src">
+        <div class="stage-src-label">По звонкам</div>
+        <div class="stage-src-value ${m.stage.code}">${m.stage.name}</div>
+      </div>
+      <div class="stage-src">
+        <div class="stage-src-label">По встречам</div>
+        <div class="stage-src-value ${stageCodeFromName(meetingData.latest_meeting.stage_calculated)}">${meetingData.latest_meeting.stage_calculated || '—'}</div>
+      </div>
+    </div>` : '';
+  
   document.getElementById('tab-overview').innerHTML = `
     <div class="mod-stage">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
         <div style="font-size: 14px;"><b>Стадия:</b> <span style="color: var(--accent);">${m.stage.name}</span></div>
-        <div style="font-size: 12px; color: var(--text-muted);">Определяется автоматически по среднему баллу за период</div>
+        <div style="font-size: 12px; color: var(--text-muted);">По данным звонков и встреч</div>
       </div>
       <div style="font-size: 13px; color: var(--text-dim); line-height: 1.6;">${stageText}</div>
+      ${meetingStageInfo}
     </div>
     <div class="mod-kpi-grid">
       <div class="kpi">
@@ -808,9 +951,9 @@ function openManager(name) {
         <div class="kpi-sub">из ${m.count_all} всего</div>
       </div>
       <div class="kpi">
-        <div class="kpi-label">Разборов с мастером</div>
-        <div class="kpi-value">4</div>
-        <div class="kpi-sub">еженедельно</div>
+        <div class="kpi-label">Встреч с мастером</div>
+        <div class="kpi-value">${meetingData.count}</div>
+        <div class="kpi-sub">${meetingData.count > 0 ? 'проанализировано AI' : 'ждём загрузки'}</div>
       </div>
       <div class="kpi">
         <div class="kpi-label">Средний балл</div>
@@ -828,6 +971,9 @@ function openManager(name) {
       ${renderFeedbackBlock(m.name, 'recommendation', '🎯 Точки роста')}
     </div>
   `;
+  
+  // Портрет (новая вкладка)
+  document.getElementById('tab-portrait').innerHTML = renderPortraitTab(name, meetingData);
   
   // Competencies
   document.getElementById('tab-competencies').innerHTML = `
@@ -912,6 +1058,220 @@ function switchTab(name) {
   document.getElementById('tab-' + name).classList.add('active');
 }
 
+// Работа с данными встреч
+function getMeetingsData(manager) {
+  const scored = (rawData.meetings_scored || []).filter(m => m.manager === manager);
+  const detailsAll = (rawData.meetings_details || []).filter(d => d.manager === manager);
+  const details = detailsAll.length > 0 ? detailsAll[0] : null;
+  const latest = scored.length > 0 ? scored.sort((a,b) => new Date(b.meeting_date) - new Date(a.meeting_date))[0] : null;
+  return { scored, details, latest_meeting: latest, count: scored.length };
+}
+
+function stageCodeFromName(name) {
+  const map = { 'Отрицание': 's1', 'Осознание': 's2', 'Имитация': 's3', 'Интеграция': 's4' };
+  return map[name] || 's3';
+}
+
+function parseJsonSafe(s, def) {
+  if (!s) return def;
+  try { return JSON.parse(s); } catch { return def; }
+}
+
+// Русские названия маркеров для UI
+const MARKER_NAMES = {
+  m1: 'Сопротивление методологии', m2: 'Терминология Мастерской',
+  m3: 'Ссылки на прошлые уроки', m4: 'Готовность к некомфортному',
+  m5: 'Выполнение ДЗ', m6: 'Инициатива в разговоре',
+  m7: 'Признание ошибок', m8: 'Работа с обратной связью',
+  m9: 'Эмоциональный тон', m10: 'Признание зон роста',
+  m11: 'Формулирование сильных сторон',
+  m12: 'Вера в продукт', m13: 'Понимание клиента',
+  m14: 'Долгосрочные отношения', m15: 'Процесс vs результат',
+  m16: 'Пропуски и опоздания', m17: 'Глубина ответов',
+  m18: 'Уход от разбора'
+};
+
+const CATEGORY_INFO = {
+  A: { name: 'Отношение к методологии', markers: ['m1','m2','m3','m4'], key: 'category_A' },
+  B: { name: 'Ответственность и инициатива', markers: ['m5','m6','m7','m8'], key: 'category_B' },
+  C: { name: 'Психологическая устойчивость', markers: ['m9','m10','m11'], key: 'category_C' },
+  D: { name: 'Отношение к продукту и клиентам', markers: ['m12','m13','m14','m15'], key: 'category_D' },
+  E: { name: 'Дисциплина', markers: ['m16','m17','m18'], key: 'category_E' }
+};
+
+function categoryColorClass(score) {
+  if (score === null || score === undefined) return '';
+  if (score < 5) return 'low';
+  if (score < 7) return 'mid';
+  return 'high';
+}
+
+function markerColorClass(score) {
+  if (score === 'NA' || score === null || score === undefined) return 'na';
+  const n = Number(score);
+  if (isNaN(n)) return 'na';
+  if (n < 4) return 'low';
+  if (n < 7) return 'mid';
+  return 'high';
+}
+
+// Радар в SVG (18 маркеров)
+function renderRadarSvg(scores) {
+  const size = 340;
+  const cx = size / 2;
+  const cy = size / 2;
+  const rMax = 130;
+  const n = 18;
+  const points = [];
+  const labels = [];
+  
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const key = `m${i+1}`;
+    const raw = scores[key];
+    const score = (raw === 'NA' || raw === null || raw === undefined) ? 0 : Number(raw);
+    const r = (score / 10) * rMax;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    // подпись
+    const lx = cx + Math.cos(angle) * (rMax + 20);
+    const ly = cy + Math.sin(angle) * (rMax + 20);
+    labels.push(`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="10" fill="#9ba3ae" text-anchor="middle" dominant-baseline="middle">m${i+1}</text>`);
+  }
+  
+  // Кольца
+  const rings = [0.25, 0.5, 0.75, 1].map(f => 
+    `<circle cx="${cx}" cy="${cy}" r="${(rMax*f).toFixed(1)}" fill="none" stroke="#2a2f3a" stroke-width="1"/>`
+  ).join('');
+  
+  // Оси
+  const axes = [];
+  for (let i = 0; i < n; i++) {
+    const angle = (Math.PI * 2 * i / n) - Math.PI / 2;
+    const x = cx + Math.cos(angle) * rMax;
+    const y = cy + Math.sin(angle) * rMax;
+    axes.push(`<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#2a2f3a" stroke-width="0.5"/>`);
+  }
+  
+  return `<svg width="100%" viewBox="0 0 ${size} ${size}" style="display:block;">
+    ${rings}
+    ${axes.join('')}
+    <polygon points="${points.join(' ')}" fill="rgba(59,130,246,0.15)" stroke="#3b82f6" stroke-width="2"/>
+    ${points.map(p => {
+      const [x,y] = p.split(',');
+      return `<circle cx="${x}" cy="${y}" r="3" fill="#3b82f6"/>`;
+    }).join('')}
+    ${labels.join('')}
+  </svg>`;
+}
+
+function renderPortraitTab(name, meetingData) {
+  if (!meetingData.latest_meeting) {
+    return `<div class="no-portrait">
+      <div style="font-size: 32px; margin-bottom: 12px;">👤</div>
+      Пока нет данных о встречах.<br>
+      Как мастер загрузит транскрипт встречи через форму «Анализ встречи» — портрет появится здесь.
+    </div>`;
+  }
+  
+  const latest = meetingData.latest_meeting;
+  const details = meetingData.details;
+  
+  // Категории
+  const catsHtml = Object.entries(CATEGORY_INFO).map(([code, info]) => {
+    const val = Number(latest[info.key]);
+    if (isNaN(val)) return '';
+    const cls = categoryColorClass(val);
+    return `
+      <div class="cat-row">
+        <div class="cat-row-head">
+          <div class="cat-name">${info.name}</div>
+          <div class="cat-value ${cls}">${val.toFixed(1)}</div>
+        </div>
+        <div class="cat-bar"><div class="cat-bar-fill ${cls}" style="width: ${val*10}%"></div></div>
+      </div>
+    `;
+  }).join('');
+  
+  // Радар
+  const radarHtml = renderRadarSvg(latest);
+  
+  // Детальные маркеры (свернуто по умолчанию)
+  const markersHtml = Array.from({length: 18}, (_, i) => i+1).map(i => {
+    const key = `m${i}`;
+    const score = latest[key];
+    const ev = latest[`${key}_evidence`] || '';
+    const cls = markerColorClass(score);
+    const displayScore = score === 'NA' ? 'N/A' : score;
+    return `
+      <div class="marker-item">
+        <div class="marker-score ${cls}">${displayScore}</div>
+        <div class="marker-name">${MARKER_NAMES[key]}</div>
+        <div class="marker-evidence">${escapeHtml(ev)}</div>
+      </div>
+    `;
+  }).join('');
+  
+  // Блоки из details
+  const strengthsArr = details ? parseJsonSafe(details.strengths, []) : [];
+  const growthArr = details ? parseJsonSafe(details.growth_areas, []) : [];
+  const topicsArr = details ? parseJsonSafe(details.topics_covered, []) : [];
+  
+  const portraitText = details?.psychological_portrait || latest.key_insight || '—';
+  const resistance = details?.resistance_areas || '—';
+  const nextFocus = details?.next_meeting_focus || '—';
+  
+  return `
+    <div class="portrait-hero">
+      <div class="portrait-title">Портрет · последняя встреча ${formatCallDate(latest.meeting_date)}</div>
+      <div class="portrait-text">${escapeHtml(portraitText)}</div>
+    </div>
+    
+    <div class="portrait-grid">
+      <div class="portrait-radar-block">
+        <div class="p-block-title" style="color: var(--text);">Радар · 18 маркеров</div>
+        ${radarHtml}
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; text-align: center;">
+          Значения на радаре — оценка последней встречи, шкала 0–10
+        </div>
+      </div>
+      <div class="portrait-cats">
+        <div class="p-block-title" style="color: var(--text);">Категории</div>
+        ${catsHtml || '<div style="color: var(--text-muted);">Нет данных</div>'}
+      </div>
+    </div>
+    
+    <div class="portrait-blocks">
+      <div class="p-block p-block-strong">
+        <div class="p-block-title">💪 Сильные стороны</div>
+        <ul class="p-block-list">
+          ${strengthsArr.length ? strengthsArr.map(s => `<li>${escapeHtml(s)}</li>`).join('') : '<li style="color: var(--text-muted);">—</li>'}
+        </ul>
+      </div>
+      <div class="p-block p-block-growth">
+        <div class="p-block-title">🎯 Зоны роста</div>
+        <ul class="p-block-list">
+          ${growthArr.length ? growthArr.map(s => `<li>${escapeHtml(s)}</li>`).join('') : '<li style="color: var(--text-muted);">—</li>'}
+        </ul>
+      </div>
+      <div class="p-block p-block-resistance">
+        <div class="p-block-title">🚧 Зоны сопротивления</div>
+        <div class="p-block-content">${escapeHtml(resistance)}</div>
+      </div>
+      <div class="p-block p-block-focus">
+        <div class="p-block-title">🎯 Фокус следующей встречи</div>
+        <div class="p-block-content">${escapeHtml(nextFocus)}</div>
+      </div>
+    </div>
+    
+    <div class="markers-detail">
+      <div class="markers-detail-title">Детально по маркерам</div>
+      ${markersHtml}
+    </div>
+  `;
+}
+
 function renderFeedbackBlock(manager, type, title) {
   const items = (rawData.calls_feedback || [])
     .filter(f => f.manager === manager && f.feedback_type === type)
@@ -947,79 +1307,6 @@ function formatCallDate(iso) {
     const d = new Date(iso);
     return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
   } catch { return '—'; }
-}
-
-// Умное время события — "сегодня" / "вчера" / дата
-function formatFeedTime(iso) {
-  try {
-    const d = new Date(iso);
-    const now = new Date();
-    const diffMs = now - d;
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffDays === 0) return 'сегодня';
-    if (diffDays === 1) return 'вчера';
-    if (diffDays < 7) return `${diffDays} дн назад`;
-    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-  } catch { return '—'; }
-}
-
-// Имитационные события мастера (пока нет листа meetings в Sheets)
-// ВАЖНО: это не факт, а приближение по расписанию — 1 встреча в неделю с каждым менеджером
-function generateMasterEvents(managers, calls) {
-  const events = [];
-  if (managers.length === 0) return events;
-  
-  // Берём самую свежую дату из звонков как якорь
-  const dates = calls.map(c => new Date(c.scored_at)).filter(d => !isNaN(d));
-  if (dates.length === 0) return events;
-  const latest = new Date(Math.max(...dates.map(d => d.getTime())));
-  
-  const topics = [
-    'работа с возражениями по формуле',
-    'критерии выбора поставщика',
-    'фиксация даты next step',
-    'ценность видеовстречи',
-    'Свойства-Выгода в презентации',
-    'выявление роли клиента в проекте',
-    'глубокое выявление потребностей'
-  ];
-  
-  // 2 встречи за последние дни для разных менеджеров
-  for (let i = 0; i < Math.min(2, managers.length); i++) {
-    const daysAgo = i + 1;
-    const eventDate = new Date(latest.getTime() - daysAgo * 86400000);
-    events.push({
-      type: 'master_meeting',
-      time: eventDate.toISOString(),
-      manager: managers[i % managers.length],
-      topic: topics[i % topics.length]
-    });
-  }
-  
-  // 1 наблюдение — по данным AI если есть яркий факт
-  if (calls.length > 0) {
-    const managerCalls = {};
-    calls.forEach(c => {
-      if (!managerCalls[c.manager]) managerCalls[c.manager] = [];
-      managerCalls[c.manager].push(c);
-    });
-    
-    // Берём менеджера с наибольшей выборкой
-    const topManager = Object.entries(managerCalls).sort((a,b) => b[1].length - a[1].length)[0];
-    if (topManager) {
-      const [mgr, mgrCalls] = topManager;
-      const avgScore = avgPctScore(mgrCalls);
-      const insightDate = new Date(latest.getTime() - 3 * 86400000);
-      events.push({
-        type: 'insight',
-        time: insightDate.toISOString(),
-        manager: mgr,
-        text: `Средний балл за период — ${avgScore}%. AI-агент разобрал ${mgrCalls.length} звонков и подсветил ключевые точки роста для проработки на ближайших встречах.`
-      });
-    }
-  }
-  
-  return events;
 }
 
 function getInitials(name) {
