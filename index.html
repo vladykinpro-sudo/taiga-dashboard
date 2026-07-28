@@ -8,26 +8,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0d0a17;
-  --bg-2: #12102a;
-  --card: #1a1533;
-  --card-2: #221c40;
-  --card-hover: #2a2350;
-  --border: #2e2755;
-  --border-strong: #3f3670;
-  --text: #ede9f8;
-  --text-dim: #a8a1c8;
-  --text-muted: #726999;
+  --bg: #2a1a5c;
+  --bg-2: #331e6e;
+  --card: #3a2478;
+  --card-2: #422a85;
+  --card-hover: #4a3095;
+  --border: #5b40a5;
+  --border-strong: #7355bd;
+  --text: #ffffff;
+  --text-dim: #ede9f8;
+  --text-muted: #c9beea;
   --brand: #7c3aed;
   --brand-light: #a78bfa;
   --brand-deep: #1e006e;
-  --accent: #7c3aed;
+  --accent: #a78bfa;
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
   --stage-1: #ef4444;
   --stage-2: #f59e0b;
-  --stage-3: #7c3aed;
+  --stage-3: #a78bfa;
   --stage-4: #10b981;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,8 +45,8 @@ body {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: radial-gradient(circle at 30% 20%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 80% 80%, rgba(167, 139, 250, 0.08) 0%, transparent 50%),
+  background: radial-gradient(circle at 30% 20%, rgba(167, 139, 250, 0.25) 0%, transparent 55%),
+              radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.15) 0%, transparent 55%),
               var(--bg);
 }
 .login-card {
@@ -59,16 +59,16 @@ body {
   text-align: center;
 }
 .login-logo {
-  width: 90px;
-  height: 86px;
+  width: 72px;
+  height: 68px;
   display: block;
-  margin: 0 auto 24px;
-  filter: brightness(0) invert(1) opacity(0.95) drop-shadow(0 0 24px rgba(124, 58, 237, 0.35));
+  margin: 0 auto 20px;
+  filter: brightness(0) invert(1) drop-shadow(0 0 16px rgba(255, 255, 255, 0.2));
 }
 .login-brand {
   font-size: 11px;
   letter-spacing: 4px;
-  color: var(--brand-light);
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
   margin-bottom: 12px;
   text-transform: uppercase;
