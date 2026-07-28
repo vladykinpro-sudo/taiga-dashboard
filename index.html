@@ -223,6 +223,124 @@ body {
 
 .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
 
+/* Кнопка Показать все встречи */
+.show-all-btn {
+  margin-top: 10px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.show-all-btn:hover {
+  background: var(--card-hover);
+  color: var(--text);
+  border-color: var(--brand);
+}
+
+/* Модалка всех встреч */
+.all-meetings-modal .modal {
+  max-width: 900px;
+}
+.meetings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.meeting-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.meeting-card:hover {
+  background: var(--card-hover);
+  border-color: var(--brand);
+}
+.meeting-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.meeting-card-manager {
+  font-size: 14px;
+  font-weight: 600;
+}
+.meeting-card-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.meeting-card-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.meeting-meta-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--card-2);
+  color: var(--text-dim);
+}
+.meeting-meta-tag.stage-s1 { background: rgba(239,68,68,0.15); color: var(--danger); }
+.meeting-meta-tag.stage-s2 { background: rgba(245,158,11,0.15); color: var(--warning); }
+.meeting-meta-tag.stage-s3 { background: rgba(59,130,246,0.15); color: var(--accent); }
+.meeting-meta-tag.stage-s4 { background: rgba(16,185,129,0.15); color: var(--success); }
+.meeting-card-insight {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.meetings-date-group {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.meetings-date-group:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.meetings-date-group-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+.meetings-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.meetings-summary-item { text-align: center; }
+.meetings-summary-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.meetings-summary-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.7); z-index: 200; display: none;
@@ -576,6 +694,20 @@ body {
   </div>
 </div>
 
+<!-- Модалка всех встреч -->
+<div class="modal-overlay all-meetings-modal" id="modalAllMeetings">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title-block">
+        <h2>Все встречи мастера с командой</h2>
+        <div class="sub" id="allMeetingsSubtitle">—</div>
+      </div>
+      <button class="modal-close" onclick="closeAllMeetings()">×</button>
+    </div>
+    <div class="modal-body" id="allMeetingsBody"></div>
+  </div>
+</div>
+
 <script>
 // =============================
 // КОНФИГ
@@ -782,17 +914,7 @@ function render() {
     return `<div class="stage-pin ${m.stage.code}" style="left: ${left}%; top: ${8 + (idx % 2) * 32}px;" onclick="openManager('${escapeAttr(m.name)}')">${escapeHtml(m.name)}</div>`;
   }).join('');
   
-  // Активность — микс звонков и встреч
-  const callEvents = calls.map(c => ({
-    type: 'call',
-    time: c.scored_at,
-    date: c.call_date,
-    manager: c.manager,
-    summary: c.call_summary,
-    score: Math.round((parseFloat(c.pct_score) || 0) * 100),
-    call_type: c.call_type
-  }));
-  
+  // Активность — только встречи мастера, самые свежие сверху
   const meetingEvents = (rawData.meetings_scored || []).map(m => ({
     type: 'meeting',
     time: m.scored_at,
@@ -803,24 +925,14 @@ function render() {
     duration: m.duration_min
   }));
   
-  const allEvents = [...callEvents, ...meetingEvents]
-    .sort((a,b) => new Date(b.time) - new Date(a.time))
-    .slice(0, 8);
+  const allEvents = meetingEvents
+    .sort((a,b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 6);
   
-  const feedHtml = allEvents.map(e => {
-    const dateStr = formatCallDate(e.date);
-    if (e.type === 'call') {
-      return `
-        <div class="feed-item">
-          <div class="feed-time">${dateStr}</div>
-          <div class="feed-text">
-            <b>${escapeHtml(e.manager)}</b> — ${escapeHtml(e.summary || 'звонок разобран')}
-            <br><small style="color:var(--text-muted);">Балл: ${e.score}% · тип: ${escapeHtml(e.call_type || '—')}</small>
-          </div>
-          <div class="feed-tag call">AI разбор</div>
-        </div>
-      `;
-    } else {
+  const feedHtml = allEvents.length === 0 ? 
+    '<div style="text-align:center; color:var(--text-muted); padding: 30px 20px;">Пока нет разобранных встреч<br><small>Загрузите транскрипты через форму «Анализ встречи»</small></div>' :
+    allEvents.map(e => {
+      const dateStr = formatCallDate(e.date);
       return `
         <div class="feed-item">
           <div class="feed-time">${dateStr}</div>
@@ -831,8 +943,11 @@ function render() {
           <div class="feed-tag meeting">Встреча</div>
         </div>
       `;
-    }
-  }).join('');
+    }).join('');
+  
+  const totalMeetingsInFeed = meetingEvents.length;
+  const showMoreBtn = totalMeetingsInFeed > 6 ? 
+    `<div class="show-all-btn" onclick="openAllMeetings()">Показать все встречи (${totalMeetingsInFeed}) →</div>` : '';
   
   // Список задач команды из recommendations
   const topRecs = getTopRecommendations(5);
@@ -908,10 +1023,11 @@ function render() {
     <div class="two-col">
       <div>
         <div class="section-header">
-          <div class="section-title">Активность за период</div>
+          <div class="section-title">Работа мастера · встречи</div>
           <div class="section-meta">${periodLabel(filters.period)}</div>
         </div>
-        <div class="activity-feed">${feedHtml || '<div style="text-align:center; color:var(--text-muted); padding: 20px;">Нет звонков за выбранный период</div>'}</div>
+        <div class="activity-feed">${feedHtml}</div>
+        ${showMoreBtn}
       </div>
       <div>
         <div class="section-header">
@@ -1542,6 +1658,100 @@ function toggleExpand() {
   document.getElementById('expandBody').classList.toggle('open');
 }
 
+// Модалка всех встреч
+function openAllMeetings() {
+  const meetings = (rawData.meetings_scored || []).slice()
+    .sort((a,b) => new Date(b.meeting_date) - new Date(a.meeting_date));
+  
+  if (meetings.length === 0) {
+    document.getElementById('allMeetingsBody').innerHTML = '<div style="text-align:center; padding: 40px; color: var(--text-muted);">Пока нет разобранных встреч</div>';
+    document.getElementById('modalAllMeetings').classList.add('open');
+    return;
+  }
+  
+  // Уникальные менеджеры
+  const uniqueManagers = new Set(meetings.map(m => m.manager)).size;
+  // Общая длительность
+  const totalDuration = meetings.reduce((sum, m) => sum + (Number(m.duration_min) || 0), 0);
+  const totalHours = Math.floor(totalDuration / 60);
+  const totalMins = totalDuration % 60;
+  const durationStr = totalHours > 0 ? `${totalHours}ч ${totalMins}м` : `${totalMins}м`;
+  
+  // Диапазон дат
+  const firstDate = formatCallDate(meetings[meetings.length-1].meeting_date);
+  const lastDate = formatCallDate(meetings[0].meeting_date);
+  
+  document.getElementById('allMeetingsSubtitle').textContent = 
+    `${meetings.length} встреч · ${uniqueManagers} ${pluralize(uniqueManagers, 'менеджер','менеджера','менеджеров')} · период ${firstDate} — ${lastDate}`;
+  
+  // Группировка по месяцам
+  const byMonth = {};
+  meetings.forEach(m => {
+    const d = new Date(m.meeting_date);
+    const monthKey = d.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long' });
+    if (!byMonth[monthKey]) byMonth[monthKey] = [];
+    byMonth[monthKey].push(m);
+  });
+  
+  const monthGroupsHtml = Object.entries(byMonth).map(([month, ms]) => {
+    const cardsHtml = ms.map(m => renderMeetingCard(m)).join('');
+    return `
+      <div class="meetings-date-group">
+        <div class="meetings-date-group-title">${escapeHtml(month)} · ${ms.length} ${pluralize(ms.length, 'встреча','встречи','встреч')}</div>
+        <div class="meetings-list">${cardsHtml}</div>
+      </div>
+    `;
+  }).join('');
+  
+  const summaryBarHtml = `
+    <div class="meetings-summary-bar">
+      <div class="meetings-summary-item">
+        <div class="meetings-summary-value">${meetings.length}</div>
+        <div class="meetings-summary-label">встреч всего</div>
+      </div>
+      <div class="meetings-summary-item">
+        <div class="meetings-summary-value">${uniqueManagers}</div>
+        <div class="meetings-summary-label">менеджеров</div>
+      </div>
+      <div class="meetings-summary-item">
+        <div class="meetings-summary-value">${durationStr}</div>
+        <div class="meetings-summary-label">суммарно</div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('allMeetingsBody').innerHTML = summaryBarHtml + monthGroupsHtml;
+  document.getElementById('modalAllMeetings').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAllMeetings() {
+  document.getElementById('modalAllMeetings').classList.remove('open');
+  if (!document.getElementById('modal').classList.contains('open')) {
+    document.body.style.overflow = '';
+  }
+}
+
+function renderMeetingCard(m) {
+  const dateStr = formatCallDate(m.meeting_date);
+  const stageCode = stageCodeFromName(m.stage_calculated);
+  const durationStr = m.duration_min ? `${m.duration_min} мин` : '';
+  
+  return `
+    <div class="meeting-card" onclick="openManager('${escapeAttr(m.manager)}'); closeAllMeetings();">
+      <div class="meeting-card-head">
+        <div class="meeting-card-manager">${escapeHtml(m.manager)}</div>
+        <div class="meeting-card-date">${dateStr}</div>
+      </div>
+      <div class="meeting-card-meta">
+        ${durationStr ? `<span class="meeting-meta-tag">${durationStr}</span>` : ''}
+        ${m.stage_calculated ? `<span class="meeting-meta-tag stage-${stageCode}">Стадия: ${escapeHtml(m.stage_calculated)}</span>` : ''}
+      </div>
+      <div class="meeting-card-insight">${escapeHtml(m.key_insight || 'разбор проведён')}</div>
+    </div>
+  `;
+}
+
 // Фильтры pills
 document.addEventListener('click', (e) => {
   const pill = e.target.closest('.filter-pill');
@@ -1565,7 +1775,14 @@ document.getElementById('modal').addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') {
+    closeModal();
+    closeAllMeetings();
+  }
+});
+
+document.getElementById('modalAllMeetings').addEventListener('click', (e) => {
+  if (e.target.id === 'modalAllMeetings') closeAllMeetings();
 });
 
 // Автостарт
