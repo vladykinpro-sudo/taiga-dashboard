@@ -911,6 +911,49 @@ let rawData = null;
 let filters = { period: 'month', manager: 'all', type: 'all' };
 
 // =============================
+// АНОНИМИЗАЦИЯ (для инстаграм-сторис и подобного)
+// Активируется через URL параметр ?anon=1
+// =============================
+function anonymizeIfRequested(data) {
+  const url = new URL(location.href);
+  if (url.searchParams.get('anon') !== '1') return data;
+  
+  // Собираем уникальных менеджеров, сортируем по алфавиту (стабильный порядок)
+  const managerNames = new Set();
+  (data.calls_scored || []).forEach(c => c.manager && managerNames.add(c.manager));
+  (data.meetings_scored || []).forEach(m => m.manager && managerNames.add(m.manager));
+  (data.calls_feedback || []).forEach(f => f.manager && managerNames.add(f.manager));
+  (data.meetings_details || []).forEach(d => d.manager && managerNames.add(d.manager));
+  
+  const managerMap = {};
+  Array.from(managerNames).sort().forEach((name, i) => {
+    managerMap[name] = `Менеджер ${i + 1}`;
+  });
+  
+  // Универсальный replacer для строк объекта
+  const anonymizeRow = (row) => {
+    if (row.manager && managerMap[row.manager]) row.manager = managerMap[row.manager];
+    if (row.company) row.company = 'Клиент';
+    if (row.master) row.master = 'Мастер';
+    return row;
+  };
+  
+  data.calls_scored = (data.calls_scored || []).map(anonymizeRow);
+  data.calls_feedback = (data.calls_feedback || []).map(anonymizeRow);
+  data.meetings_scored = (data.meetings_scored || []).map(anonymizeRow);
+  data.meetings_details = (data.meetings_details || []).map(anonymizeRow);
+  
+  // Подмена заголовков в шапке
+  const topbarTitle = document.querySelector('.topbar-title');
+  if (topbarTitle) {
+    topbarTitle.innerHTML = 'Клиент <small>· работа Мастерской продаж</small>';
+  }
+  document.title = 'Клиент · Работа Мастерской продаж';
+  
+  return data;
+}
+
+// =============================
 // ЗАГРУЗКА
 // =============================
 async function loadData() {
@@ -923,7 +966,7 @@ async function loadData() {
     const json = await res.json();
     if (json.error) throw new Error(json.error);
     
-    rawData = json;
+    rawData = anonymizeIfRequested(json);
     const timeStr = formatUpdatedAt(json.updated_at);
     setStatus('ok', `Обновлено: ${timeStr}`);
     populateManagerFilter();
