@@ -594,6 +594,30 @@ body {
 .call-summary-cell:hover {
   -webkit-line-clamp: unset; overflow: visible;
 }
+
+/* Блоки Зон роста в Плане работы */
+.growth-block {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.growth-block:first-of-type { border-top: none; padding-top: 0; }
+.growth-block-title {
+  font-size: 11px; letter-spacing: 1px; color: var(--text-muted);
+  text-transform: uppercase; font-weight: 600; margin-bottom: 8px;
+}
+.growth-list {
+  margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.65; color: var(--text-dim);
+}
+.growth-list li { margin-bottom: 5px; }
+.growth-list li:last-child { margin-bottom: 0; }
+.growth-block-personal {
+  background: rgba(124, 58, 237, 0.06);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+.growth-block-personal .growth-block-title { color: var(--brand); }
 .call-type {
   display: inline-block; padding: 2px 8px; border-radius: 6px;
   font-size: 11px; background: var(--card-2); color: var(--text-dim);
@@ -892,7 +916,7 @@ body {
 // =============================
 // КОНФИГ
 // =============================
-const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=7RUYPnTouod7g1vU';
+const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=x9k2m7q4w8n5r1t3';
 
 // Хеши разрешённых паролей (SHA-256)
 const ALLOWED_PASSWORD_HASHES = {
@@ -914,6 +938,172 @@ const COMPETENCIES = [
   { code: 'object',  name: 'Работа с возражениями', params: ['p26','p27','p28','p29','p30'] },
   { code: 'close',   name: 'Закрытие и next step', params: ['p31','p32','p33','p34'] }
 ];
+
+// Методология работы с зонами роста — из технологии Мастерской продаж.
+// money_priority: чем выше число, тем ближе к деньгам (для сортировки при равных %).
+const GROWTH_ZONE_METHODOLOGY = {
+  contact: {
+    money_priority: 1,
+    symptoms: [
+      'Не проходит секретаря (не знает нескольких методов прохода)',
+      'Не знает, кто ЛПР в компании клиента',
+      'Звонит не по всем номерам в карточке',
+      'Не соблюдает ТВК (технологию входящего/выходящего контакта): не прозванивает несколько раз, преждевременно убирает в некорректный',
+      'Не отрабатывает возражения на начальном этапе звонка («нам не надо», «не интересно»)'
+    ],
+    training: [
+      'Разобрать и выучить несколько техник прохода секретаря',
+      'Разобрать ТВК: прозвон всех контактов, правило некорректа',
+      'Разобрать варианты ЛПР по продукту',
+      'Распечатать материалы или скинуть ссылки, чтобы вся информация была под рукой у менеджера',
+      'Выучить отработку возражений начального этапа: «нам не надо», «не интересно», «мы уже работаем с другими»'
+    ],
+    control: [
+      'КРМ (контроль разбора менеджеров) по новым обработанным контактам — проверить соблюдение ТВК и технологии продаж',
+      'Назначить тест на знание ТВК, разобрать результаты',
+      'Контроль заполнения карточки в CRM: ФИО и должность ЛПР',
+      'Контроль некорректов в CRM',
+      'Контроль отказов из статуса «Новый клиент» — возврат в работу с задачей при необходимости'
+    ]
+  },
+  need: {
+    money_priority: 2,
+    symptoms: [
+      'Не отрабатывает возражения клиента',
+      'Не следует технологии продаж: не называет цель звонка, не покупает время',
+      'Выявляет потребность не у того ЛПР',
+      'Не задаёт открытые вопросы или задаёт вопросы не опираясь на портрет клиента (невпопад)',
+      'При возражении клиента не возвращается к спичу',
+      'Не резюмирует после ответов клиента',
+      'Проводит презентацию не опираясь на потребности клиента',
+      'Не знает отстройки от конкурента или не использует её',
+      'Не предлагает онлайн-презентацию',
+      'Не соблюдает очерёдность этапов технологии продаж'
+    ],
+    training: [
+      'Поставить задачу собрать наиболее часто встречающиеся возражения, прописать речевые модули на их отработку',
+      'Провести обучение по каждому этапу технологии продаж — рассказать цели каждого этапа',
+      'Прописать портреты ЛПР и логику продажи каждому портрету',
+      'Выучить речевые модули по презентации на основе свойств и выгод сервиса',
+      'Повторить знание свойств и выгод сервиса',
+      'Прослушка звонков с ПЗ (проверочными звонками) по конкретным зонам роста',
+      'Поставить задачу заполнять чек-лист по сделке',
+      'Выучить отстройку от конкурентов'
+    ],
+    control: [
+      'Контроль карточек в статусе «Вышли на ЛПР», корректировка сроков перезвона',
+      'Контроль отказов',
+      'Проверка заполнения чек-листа в CRM',
+      'КРМ — проверить заполнение чек-листа и соблюдение технологии продаж',
+      'Тест на знание свойств и выгод, отстройки от конкурентов',
+      'Запрашивать знание цели каждого этапа технологии продаж на разборе клиентов',
+      'Дать задание прописать логику ведения продажи под разные портреты клиентов'
+    ]
+  },
+  pitch: {
+    money_priority: 3,
+    symptoms: [
+      'Не предлагает счёт после презентации',
+      'Не отрабатывает возражения при выставлении счёта',
+      'Неверно подбирает тариф на основании выявленных потребностей — клиент отказывается от счёта',
+      'Не резюмирует после презентации выявленные потребности',
+      'Не запрашивает ОС (обратную связь) у клиента после презентации'
+    ],
+    training: [
+      'Разобрать речевые модули на выставление счёта',
+      'Разобрать тарифы сервиса под разные потребности',
+      'Выучить отработку возражений после выставления счёта',
+      'Постановка задачи по каждому клиенту на выставление счёта — использовать тег «Задача от РОПа» или ввести реестр таких клиентов',
+      'Выучить речевые модули этапа резюмирования'
+    ],
+    control: [
+      'Тест на знание тарифов: «написать потребности клиента — подобрать тариф»',
+      'Контроль статуса «Диагностика без счёта», «Диагностика со счётом»',
+      'Контроль отказов из статуса «Диагностика»',
+      'Контроль сроков перезвона по статусу «Диагностика»',
+      'Контроль выполнения задач по клиентам через тег или реестр',
+      'Чек-лист в CRM по закрытию сделки'
+    ]
+  },
+  object: {
+    money_priority: 4,
+    symptoms: [
+      'Не устанавливает сроки по оплате счёта',
+      'Не выясняет причин переноса срока оплаты у клиента',
+      'Не выясняет цепочку согласования по счёту (кто ещё влияет на решение)',
+      'Не выходит на дополнительного ЛПР или ЛВР для согласования сроков оплаты'
+    ],
+    training: [
+      'Разобрать речевые модули на закрытие контакта счётом',
+      'Заполнять чек-лист по счёту',
+      'Ввести реестр счетов, ставить задачи по каждому счёту'
+    ],
+    control: [
+      'Контроль сроков перезвона по счёту в CRM',
+      'Контроль заполнения чек-листа в CRM',
+      'Контроль занесения всех счетов в реестр',
+      'Контроль выполнения задачи по счетам (прослушка звонка по счёту, комментарий по задаче в CRM)',
+      'Контроль отказов после статуса «Сделано предложение»'
+    ]
+  },
+  close: {
+    money_priority: 5,
+    symptoms: [
+      'Не вовремя звонит по счёту',
+      'Не использует техники дожима в случае переноса срока оплаты',
+      'Не выясняет причины неоплаты',
+      'Выяснив причины неоплаты — не проверяет их истинность',
+      'Не выходит на других ЛПР',
+      'Не предлагает все способы оплаты клиенту (р/с, наличные в банке, рассрочка, оплата с личной карты)'
+    ],
+    training: [
+      'Разобрать техники дожима',
+      'Разобрать все способы оплаты',
+      'Разобрать дожим через другого ЛПР',
+      'Разобрать и прописать список вопросов на закрытие сделки',
+      'Разобрать альтернативные способы оплаты и выходов из ситуаций'
+    ],
+    control: [
+      'Контроль сроков перезвона по счёту',
+      'Контроль неоплаченных счетов, ПЗ по неоплаченному счёту — как дожать',
+      'Контроль проработки всех ЛПР',
+      'Чек-лист в CRM за закрытие контакта',
+      'КРМ на закрытие сделки'
+    ]
+  }
+};
+
+// Возвращает топ-N зон роста менеджера. Считает % по компетенциям,
+// оставляет только те, где ≤ 70%. При равных % выигрывает та, что ближе к деньгам.
+function getTopGrowthZones(managerCalls, limit) {
+  const zones = [];
+  for (const comp of COMPETENCIES) {
+    // Пропускаем «Ведение разговора» (только 1 параметр — не тянет на зону роста)
+    if (comp.code === 'lead') continue;
+    // Пропускаем компетенции для которых нет методологии в файле
+    if (!GROWTH_ZONE_METHODOLOGY[comp.code]) continue;
+    
+    const isObj = comp.code === 'object';
+    const pct = pctForGroup(managerCalls, comp.params, isObj);
+    // null (нет данных) не берём в зоны роста — нельзя утверждать что это слабое место
+    if (pct === null) continue;
+    // Порог активации: если ≥ 71 — не считаем зоной роста
+    if (pct > 70) continue;
+    
+    zones.push({
+      code: comp.code,
+      name: comp.name,
+      pct: pct,
+      priority: GROWTH_ZONE_METHODOLOGY[comp.code].money_priority
+    });
+  }
+  // Сортировка: сначала худший % (по возрастанию), при равенстве — приоритет по близости к деньгам (по убыванию)
+  zones.sort((a, b) => {
+    if (a.pct !== b.pct) return a.pct - b.pct;
+    return b.priority - a.priority;
+  });
+  return zones.slice(0, limit);
+}
 
 // Состояние
 let rawData = null;
@@ -1636,21 +1826,74 @@ function openManager(name) {
     </div>
   `;
   
-  // Plan tab
-  const managerRecs = getManagerTopRecs(m.name, 5);
-  document.getElementById('tab-plan').innerHTML = `
-    <div style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px;">
-      <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px;">
-        Приоритеты работы с ${escapeHtml(m.name)} на следующие 4 недели — по частоте рекомендаций мастера и AI-агента:
-      </div>
-      ${managerRecs.map((r, i) => `
-        <div class="fb-item" style="border-bottom: 1px solid var(--border); padding: 12px 0;">
-          <small style="color: var(--brand); font-weight: 700; font-size: 14px; min-width: 24px;">${i+1}</small>
-          <span><b>${escapeHtml(r.text)}</b><br><small style="color: var(--text-muted);">Упоминается ${r.count} раз в разборах</small></span>
-        </div>
-      `).join('') || '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Разборы пока не собраны</div>'}
+  // Plan tab — топ-2 зоны роста + инструменты + персональные примеры
+  const growthZones = getTopGrowthZones(m.calls_period, 2);
+  const managerRecs = getManagerTopRecs(m.name, 20); // берём с запасом, потом раскидаем по зонам
+  
+  const planHtml = growthZones.length === 0 ? `
+    <div style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; text-align: center;">
+      <div style="font-size: 32px; margin-bottom: 8px;">💪</div>
+      <div style="font-size: 15px; font-weight: 600; margin-bottom: 6px;">Ярких зон роста нет</div>
+      <div style="font-size: 13px; color: var(--text-muted);">По компетенциям выше 70% — держим уровень, точечно докручиваем сильные стороны</div>
     </div>
+  ` : `
+    <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px;">
+      Топ-2 зоны роста менеджера ${escapeHtml(m.name)} на следующие 4 недели.
+      Сортировка: сначала слабые проценты, при равенстве — ближе к деньгам.
+    </div>
+    ${growthZones.map((zone, idx) => {
+      const meth = GROWTH_ZONE_METHODOLOGY[zone.code];
+      // Персональные примеры: берём рекомендации из calls_feedback этого менеджера
+      // Пытаемся отсортировать по частоте
+      const personalExamples = managerRecs.slice(0, 3);
+      return `
+        <div class="growth-zone" style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px;">
+          <div class="growth-zone-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+            <div>
+              <div style="font-size: 11px; letter-spacing: 1px; color: var(--brand); text-transform: uppercase; font-weight: 700;">Зона роста №${idx+1}</div>
+              <div style="font-size: 17px; font-weight: 600; margin-top: 4px;">${escapeHtml(zone.name)}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 24px; font-weight: 700; color: ${zone.pct < 50 ? 'var(--danger)' : 'var(--warning)'};">${zone.pct}%</div>
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">текущий уровень</div>
+            </div>
+          </div>
+          
+          <div class="growth-block">
+            <div class="growth-block-title">Что менеджер делает не так</div>
+            <ul class="growth-list">
+              ${meth.symptoms.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+            </ul>
+          </div>
+          
+          <div class="growth-block">
+            <div class="growth-block-title">Обучение и корректировка от мастера</div>
+            <ul class="growth-list">
+              ${meth.training.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+            </ul>
+          </div>
+          
+          <div class="growth-block">
+            <div class="growth-block-title">Мероприятия контроля</div>
+            <ul class="growth-list">
+              ${meth.control.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
+            </ul>
+          </div>
+          
+          ${idx === 0 && personalExamples.length > 0 ? `
+            <div class="growth-block growth-block-personal">
+              <div class="growth-block-title">Персонально по звонкам ${escapeHtml(m.name)}</div>
+              <ul class="growth-list">
+                ${personalExamples.map(r => `<li>${escapeHtml(r.text)}${r.count > 1 ? ` <small style="color: var(--text-muted);">(× ${r.count})</small>` : ''}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('')}
   `;
+  
+  document.getElementById('tab-plan').innerHTML = planHtml;
   
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow = 'hidden';
