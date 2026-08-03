@@ -274,6 +274,12 @@ body {
   border-bottom: 1px solid var(--border);
   background: var(--card-2);
 }
+/* Понедельная сетка: аватар + имя + 4 недели + тренд + кнопка */
+.managers-list-header.weekly,
+.manager-row.weekly {
+  grid-template-columns: 40px 220px repeat(4, 1fr) 90px 90px;
+}
+.mh-week { text-align: center; }
 .mh-cell {
   font-size: 10px;
   color: var(--text-muted);
@@ -289,6 +295,47 @@ body {
 }
 .manager-row:hover { background: var(--card-hover); }
 .manager-row:last-child { border-bottom: none; }
+
+/* Ячейка недели: центрированное значение с цветовой подсветкой */
+.week-cell {
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 8px 6px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.week-cell.good {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--success);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+.week-cell.mid {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--warning);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+.week-cell.low {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+.week-cell.empty {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 14px;
+}
+
+/* Тренд */
+.week-trend {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+.week-trend.up { color: var(--success); }
+.week-trend.down { color: var(--danger); }
+.week-trend.flat { color: var(--text-dim); }
+.week-trend.empty { color: var(--text-muted); font-weight: 400; }
 .manager-avatar {
   width: 36px; height: 36px; border-radius: 50%; background: var(--card-2);
   border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
@@ -890,6 +937,31 @@ body {
   .two-col { grid-template-columns: 1fr; }
   .manager-row { grid-template-columns: 40px 1fr 120px 80px 80px; }
   .manager-row .mini-chart, .manager-row .manager-activity { display: none; }
+  
+  /* Понедельная сетка на планшетах: скрываем 2 старые недели, оставляем 2 свежие */
+  .managers-list-header.weekly,
+  .manager-row.weekly {
+    grid-template-columns: 40px 180px 1fr 1fr 80px 90px;
+  }
+  .managers-list-header.weekly .mh-week:nth-of-type(1),
+  .managers-list-header.weekly .mh-week:nth-of-type(2),
+  .manager-row.weekly .week-cell:nth-of-type(1),
+  .manager-row.weekly .week-cell:nth-of-type(2) {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  /* Мобильные: 2 недели + тренд */
+  .managers-list-header.weekly,
+  .manager-row.weekly {
+    grid-template-columns: 40px 1fr 1fr 1fr 70px;
+    gap: 8px;
+  }
+  .manager-row.weekly .open-btn,
+  .managers-list-header.weekly .mh-cell:last-child {
+    display: none;
+  }
+  .week-cell { font-size: 13px; padding: 6px 4px; }
 }
 </style>
 </head>
@@ -1388,6 +1460,57 @@ function filteredMeetings() {
 
 // Возвращает границы текущего периода в удобном для показа виде
 // Например: "24 июля – 30 июля" или "всё время"
+// =============================
+// РАБОТА С КАЛЕНДАРНЫМИ НЕДЕЛЯМИ
+// =============================
+
+// Возвращает понедельник недели, содержащей заданную дату
+// (неделя понедельник–воскресенье)
+function getWeekStart(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay(); // 0=вс, 1=пн, ..., 6=сб
+  const daysBackToMonday = day === 0 ? 6 : day - 1;
+  d.setDate(d.getDate() - daysBackToMonday);
+  return d;
+}
+
+// Возвращает воскресенье недели, содержащей заданную дату
+function getWeekEnd(weekStart) {
+  const end = new Date(weekStart);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+}
+
+// Возвращает массив из N последних календарных недель от сегодня (включая текущую)
+// Каждый элемент: { start: Date, end: Date, label: '30.06 – 06.07' }
+function getLastNCalendarWeeks(n) {
+  const now = new Date();
+  const currentWeekStart = getWeekStart(now);
+  const weeks = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const start = new Date(currentWeekStart);
+    start.setDate(start.getDate() - i * 7);
+    const end = getWeekEnd(start);
+    const fmt = d => `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}`;
+    weeks.push({ start, end, label: `${fmt(start)}–${fmt(end)}` });
+  }
+  return weeks;
+}
+
+// Возвращает средний процент по звонкам менеджера за указанную неделю
+// null — если звонков не было
+function getManagerAvgForWeek(calls, weekStart, weekEnd) {
+  const inWeek = calls.filter(c => {
+    const d = new Date(c.call_date);
+    return d >= weekStart && d <= weekEnd;
+  });
+  if (inWeek.length === 0) return null;
+  const sum = inWeek.reduce((acc, c) => acc + (parseFloat(c.pct_score) || 0), 0);
+  return Math.round((sum / inWeek.length) * 100);
+}
+
 function periodDateRange() {
   if (!filters.period || filters.period === 'all') return 'всё время';
   const now = new Date();
@@ -1605,18 +1728,16 @@ function render() {
       <div class="expand-header" id="expandToggle" onclick="toggleExpand()">
         <div class="expand-title">
           <div class="expand-icon">+</div>
-          Менеджеры команды (${managers.length})
+          Менеджеры команды (${managers.length}) — понедельная динамика
         </div>
         <div style="font-size: 12px; color: var(--text-muted);">Клик — раскрыть список</div>
       </div>
       <div class="expand-body" id="expandBody">
-        <div class="managers-list-header">
+        <div class="managers-list-header weekly">
           <div class="mh-avatar"></div>
           <div class="mh-cell">Менеджер</div>
-          <div class="mh-cell">Стадия</div>
-          <div class="mh-cell">Средний балл</div>
-          <div class="mh-cell">Динамика качества звонков</div>
-          <div class="mh-cell">Активность</div>
+          ${getLastNCalendarWeeks(4).map(w => `<div class="mh-cell mh-week">${w.label}</div>`).join('')}
+          <div class="mh-cell">Тренд</div>
           <div class="mh-cell"></div>
         </div>
         <div class="managers-list">${managerRowsHtml}</div>
@@ -1779,41 +1900,45 @@ function renderTeamProfileSvg(managers, allCalls) {
 
 function renderManagerRow(m) {
   const initials = getInitials(m.name);
-  const avgStr = m.avg_score !== null ? m.avg_score + '%' : '—';
-  const meetingsCount = filteredMeetings().filter(x => x.manager === m.name).length;
-  const activityStr = `${m.count_period} ${pluralize(m.count_period, 'звонок','звонка','звонков')} · ${meetingsCount} ${pluralize(meetingsCount, 'разбор','разбора','разборов')}`;
+  const weeks = getLastNCalendarWeeks(4);
   
-  // Мини-график — последние 6 звонков по хронологии
-  const sorted = m.calls_all.slice().sort((a,b) => new Date(a.call_date) - new Date(b.call_date));
-  const last6 = sorted.slice(-6);
-  const bars = last6.map(c => {
-    const h = Math.round((parseFloat(c.pct_score) || 0) * 100);
-    return `<div class="mini-bar" style="height: ${Math.max(h, 8)}%" title="${h}%"></div>`;
-  }).join('') || '<div class="mini-bar" style="height:8%; opacity: 0.3;"></div>';
+  // Для каждой недели считаем средний % по звонкам менеджера
+  // calls_all — все звонки менеджера (без фильтра периода)
+  const weekPcts = weeks.map(w => getManagerAvgForWeek(m.calls_all, w.start, w.end));
   
-  // Показываем крайние значения
-  let miniLabel = '';
-  if (last6.length >= 2) {
-    const first = Math.round((parseFloat(last6[0].pct_score) || 0) * 100);
-    const last = Math.round((parseFloat(last6[last6.length-1].pct_score) || 0) * 100);
-    const arrow = last > first ? '↗' : (last < first ? '↘' : '→');
-    miniLabel = `<div class="mini-chart-label">${first}% ${arrow} ${last}%</div>`;
-  } else if (last6.length === 1) {
-    const single = Math.round((parseFloat(last6[0].pct_score) || 0) * 100);
-    miniLabel = `<div class="mini-chart-label">${single}%</div>`;
+  // Функция цветовой подсветки ячейки по проценту
+  function cellClass(pct) {
+    if (pct === null) return 'week-cell empty';
+    if (pct >= 70) return 'week-cell good';
+    if (pct >= 50) return 'week-cell mid';
+    return 'week-cell low';
+  }
+  
+  const weekCells = weekPcts.map(pct => 
+    `<div class="${cellClass(pct)}">${pct !== null ? pct + '%' : '—'}</div>`
+  ).join('');
+  
+  // Тренд: последняя vs предпоследняя неделя
+  const lastPct = weekPcts[3];
+  const prevPct = weekPcts[2];
+  let trendHtml = '<div class="week-trend empty">—</div>';
+  if (lastPct !== null && prevPct !== null) {
+    const diff = lastPct - prevPct;
+    if (diff > 0) {
+      trendHtml = `<div class="week-trend up">↗ +${diff}%</div>`;
+    } else if (diff < 0) {
+      trendHtml = `<div class="week-trend down">↘ ${diff}%</div>`;
+    } else {
+      trendHtml = `<div class="week-trend flat">→ 0%</div>`;
+    }
   }
   
   return `
-    <div class="manager-row" onclick="openManager('${escapeAttr(m.name)}')">
+    <div class="manager-row weekly" onclick="openManager('${escapeAttr(m.name)}')">
       <div class="manager-avatar">${initials}</div>
       <div class="manager-name-cell">${escapeHtml(m.name)}<small>${escapeHtml(m.company)}</small></div>
-      <div class="stage-badge ${m.stage.code}"><span class="dot"></span>${m.stage.name}</div>
-      <div class="manager-score">${avgStr}</div>
-      <div class="mini-chart-wrap">
-        <div class="mini-chart">${bars}</div>
-        ${miniLabel}
-      </div>
-      <div class="manager-activity">${activityStr}</div>
+      ${weekCells}
+      ${trendHtml}
       <button class="open-btn">Открыть</button>
     </div>
   `;
