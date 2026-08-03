@@ -618,6 +618,57 @@ body {
   margin-top: 12px;
 }
 .growth-block-personal .growth-block-title { color: var(--brand); }
+
+/* Список упавших параметров */
+.weak-params-list { display: flex; flex-direction: column; gap: 8px; }
+.weak-param {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: 6px;
+}
+.weak-param-name {
+  font-size: 13px; color: var(--text); font-weight: 500;
+  flex: 1;
+}
+.weak-param-stat {
+  display: flex; align-items: baseline; gap: 8px; flex-shrink: 0;
+}
+.weak-param-pct {
+  font-size: 15px; font-weight: 700; color: var(--warning);
+  min-width: 42px; text-align: right;
+}
+.weak-param-pct.critical { color: var(--danger); }
+.weak-param-detail { font-size: 11px; color: var(--text-muted); }
+
+/* Свёрнутая методология */
+.growth-methodology-toggle {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--card-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-dim);
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+.growth-methodology-toggle:hover { background: var(--card-hover); color: var(--text); }
+.growth-methodology-toggle .tri {
+  display: inline-block;
+  transition: transform 0.2s;
+  margin-right: 6px;
+  color: var(--brand);
+}
+.growth-methodology-toggle.open .tri { transform: rotate(90deg); }
+.growth-methodology-body {
+  display: none;
+  padding: 12px 4px 0;
+}
+.growth-methodology-body.open { display: block; }
 .call-type {
   display: inline-block; padding: 2px 8px; border-radius: 6px;
   font-size: 11px; background: var(--card-2); color: var(--text-dim);
@@ -916,7 +967,7 @@ body {
 // =============================
 // КОНФИГ
 // =============================
-const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=7RUYPnTouod7g1vU';
+const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=x9k2m7q4w8n5r1t3';
 
 // Хеши разрешённых паролей (SHA-256)
 const ALLOWED_PASSWORD_HASHES = {
@@ -1072,6 +1123,84 @@ const GROWTH_ZONE_METHODOLOGY = {
     ]
   }
 };
+
+// Русские названия 39 параметров для UI Плана работы
+const PARAMETER_NAMES = {
+  p1: 'Поздоровался',
+  p2: 'Представился',
+  p3: 'Назвал компанию',
+  p4: 'Улыбка в голосе',
+  p5: 'Обратился к клиенту по имени',
+  p6: 'Обозначил цель звонка (программирование)',
+  p7: 'Ведёт разговор',
+  p8: 'Уточнил адрес / название объекта',
+  p9: 'Уточнил сроки и статус проекта',
+  p10: 'Уточнил роль клиента',
+  p11: 'Уточнил роль компании / алгоритм выбора',
+  p12: 'Обсудил бюджет',
+  p13: 'Обсудил установку и логистику',
+  p14: 'Спросил про параметры предложений конкурентов',
+  p15: 'Вышел на ЛПР',
+  p16: 'Уточнил критерии выбора поставщика',
+  p17: 'Резюмировал услышанное',
+  p18: 'Выявил дополнительные потребности',
+  p19: 'Презентация после выявления',
+  p20: 'Презентация с учётом потребностей',
+  p21: 'Связка «Свойство — Выгода»',
+  p22: 'Позиция на равных',
+  p23: 'Не использует снижающие фразы',
+  p24: 'Предложил Zoom-встречу с ценностью',
+  p25: 'Привёл конкретные кейсы',
+  p26: 'Отработал возражения',
+  p27: 'Присоединился перед аргументом',
+  p28: 'Уточнил истинность возражения',
+  p29: 'Свойство-Выгода в аргументе',
+  p30: 'Побудил к действию после возражения',
+  p31: 'Закрыл на конкретное действие',
+  p32: 'Назначил конкретную Zoom-встречу',
+  p33: 'Договорился о следующем шаге',
+  p34: 'Вежливо попрощался',
+  p35: 'CRM: карточка заполнена',
+  p36: 'CRM: этап сделки актуален',
+  p37: 'CRM: комментарий по звонку',
+  p38: 'CRM: следующая задача поставлена',
+  p39: 'Запросил недостающие контакты'
+};
+
+// Возвращает список упавших параметров у менеджера по группе paramKeys.
+// Для каждого параметра считает: сколько раз выполнено (1) vs не выполнено (0).
+// N/A не учитывается. Возвращает только те, у кого pct ≤ threshold.
+// Сортирует по возрастанию pct (сначала худший).
+function getWeakParameters(managerCalls, paramKeys, threshold, isObjectionGroup) {
+  const results = [];
+  for (const key of paramKeys) {
+    let ones = 0, zeros = 0;
+    for (const c of managerCalls) {
+      if (isObjectionGroup) {
+        const has = c.has_objections;
+        const hasObj = has === true || has === 'TRUE' || has === 'true' || has === 1 || has === '1';
+        if (!hasObj) continue;
+      }
+      const v = c[key];
+      if (v === 1 || v === '1') ones++;
+      else if (v === 0 || v === '0') zeros++;
+    }
+    const total = ones + zeros;
+    if (total === 0) continue; // все звонки — N/A, параметр не применим
+    const pct = Math.round((ones / total) * 100);
+    if (pct > threshold) continue; // сильный параметр — не зона роста
+    results.push({
+      key,
+      name: PARAMETER_NAMES[key] || key,
+      pct,
+      ones,
+      total,
+      zeros
+    });
+  }
+  results.sort((a, b) => a.pct - b.pct);
+  return results;
+}
 
 // Возвращает топ-N зон роста менеджера. Считает % по компетенциям,
 // оставляет только те, где ≤ 70%. При равных % выигрывает та, что ближе к деньгам.
@@ -1826,9 +1955,9 @@ function openManager(name) {
     </div>
   `;
   
-  // Plan tab — топ-2 зоны роста + инструменты + персональные примеры
+  // Plan tab — топ-2 зоны роста + упавшие параметры + персональные примеры + свёрнутая методология
   const growthZones = getTopGrowthZones(m.calls_period, 2);
-  const managerRecs = getManagerTopRecs(m.name, 20); // берём с запасом, потом раскидаем по зонам
+  const managerRecs = getManagerTopRecs(m.name, 20);
   
   const planHtml = growthZones.length === 0 ? `
     <div style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 24px; text-align: center;">
@@ -1839,13 +1968,17 @@ function openManager(name) {
   ` : `
     <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px;">
       Топ-2 зоны роста менеджера ${escapeHtml(m.name)} на следующие 4 недели.
-      Сортировка: сначала слабые проценты, при равенстве — ближе к деньгам.
+      Учитываются только параметры, объективно проверяемые по звонкам.
+      Сортировка: сначала худший процент; при равенстве — ближе к деньгам.
     </div>
     ${growthZones.map((zone, idx) => {
       const meth = GROWTH_ZONE_METHODOLOGY[zone.code];
-      // Персональные примеры: берём рекомендации из calls_feedback этого менеджера
-      // Пытаемся отсортировать по частоте
-      const personalExamples = managerRecs.slice(0, 3);
+      const comp = COMPETENCIES.find(c => c.code === zone.code);
+      const isObj = zone.code === 'object';
+      const weakParams = getWeakParameters(m.calls_period, comp.params, 60, isObj);
+      const personalExamples = idx === 0 ? managerRecs.slice(0, 3) : [];
+      const uniqueBlockId = `meth-${zone.code}-${Math.random().toString(36).slice(2, 8)}`;
+      
       return `
         <div class="growth-zone" style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px;">
           <div class="growth-zone-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
@@ -1860,34 +1993,59 @@ function openManager(name) {
           </div>
           
           <div class="growth-block">
-            <div class="growth-block-title">Что менеджер делает не так</div>
-            <ul class="growth-list">
-              ${meth.symptoms.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
-            </ul>
-          </div>
-          
-          <div class="growth-block">
-            <div class="growth-block-title">Обучение и корректировка от мастера</div>
-            <ul class="growth-list">
-              ${meth.training.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
-            </ul>
-          </div>
-          
-          <div class="growth-block">
-            <div class="growth-block-title">Мероприятия контроля</div>
-            <ul class="growth-list">
-              ${meth.control.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
-            </ul>
+            <div class="growth-block-title">Что конкретно не работает у ${escapeHtml(m.name)}</div>
+            ${weakParams.length > 0 ? `
+              <div class="weak-params-list">
+                ${weakParams.map(p => `
+                  <div class="weak-param">
+                    <div class="weak-param-name">${escapeHtml(p.name)}</div>
+                    <div class="weak-param-stat">
+                      <span class="weak-param-pct ${p.pct < 30 ? 'critical' : ''}">${p.pct}%</span>
+                      <span class="weak-param-detail">выполнено в ${p.ones} из ${p.total} ${pluralize(p.total, 'звонка','звонков','звонков')}</span>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `
+              <div style="font-size: 13px; color: var(--text-muted); font-style: italic; padding: 8px 0;">
+                Общий процент по компетенции ниже нормы (${zone.pct}%), но каждый параметр по отдельности выше 60% —
+                значит проблема размазанная, работать нужно со всеми аспектами.
+              </div>
+            `}
           </div>
           
           ${idx === 0 && personalExamples.length > 0 ? `
             <div class="growth-block growth-block-personal">
-              <div class="growth-block-title">Персонально по звонкам ${escapeHtml(m.name)}</div>
+              <div class="growth-block-title">Персонально по звонкам</div>
               <ul class="growth-list">
                 ${personalExamples.map(r => `<li>${escapeHtml(r.text)}${r.count > 1 ? ` <small style="color: var(--text-muted);">(× ${r.count})</small>` : ''}</li>`).join('')}
               </ul>
             </div>
           ` : ''}
+          
+          <div class="growth-methodology-toggle" onclick="toggleMethodology('${uniqueBlockId}', this)">
+            <span class="tri">▸</span> Методология работы с этой зоной от Мастерской продаж
+          </div>
+          <div class="growth-methodology-body" id="${uniqueBlockId}">
+            <div class="growth-block">
+              <div class="growth-block-title">Что может стоять за проблемой</div>
+              <ul class="growth-list">
+                ${meth.symptoms.map(s => `<li>${escapeHtml(s)}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="growth-block">
+              <div class="growth-block-title">Обучение и корректировка от мастера</div>
+              <ul class="growth-list">
+                ${meth.training.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="growth-block">
+              <div class="growth-block-title">Мероприятия контроля</div>
+              <ul class="growth-list">
+                ${meth.control.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
         </div>
       `;
     }).join('')}
@@ -2332,6 +2490,13 @@ function escapeAttr(s) { return escapeHtml(s).replace(/`/g, ''); }
 // =============================
 // UI HANDLERS
 // =============================
+function toggleMethodology(bodyId, toggleEl) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  body.classList.toggle('open');
+  toggleEl.classList.toggle('open');
+}
+
 function toggleExpand() {
   document.getElementById('expandToggle').classList.toggle('open');
   document.getElementById('expandBody').classList.toggle('open');
