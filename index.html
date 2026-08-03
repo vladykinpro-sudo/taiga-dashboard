@@ -1039,7 +1039,7 @@ body {
 // =============================
 // КОНФИГ
 // =============================
-const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=7RUYPnTouod7g1vU';
+const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=x9k2m7q4w8n5r1t3';
 
 // Хеши разрешённых паролей (SHA-256)
 const ALLOWED_PASSWORD_HASHES = {
@@ -1483,13 +1483,13 @@ function getWeekEnd(weekStart) {
   return end;
 }
 
-// Возвращает массив из N последних календарных недель от сегодня (включая текущую)
+// Возвращает массив из N последних завершённых календарных недель (текущая исключена)
 // Каждый элемент: { start: Date, end: Date, label: '30.06 – 06.07' }
 function getLastNCalendarWeeks(n) {
   const now = new Date();
   const currentWeekStart = getWeekStart(now);
   const weeks = [];
-  for (let i = n - 1; i >= 0; i--) {
+  for (let i = n; i >= 1; i--) {
     const start = new Date(currentWeekStart);
     start.setDate(start.getDate() - i * 7);
     const end = getWeekEnd(start);
