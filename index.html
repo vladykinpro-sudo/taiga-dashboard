@@ -883,7 +883,7 @@ body {
 // =============================
 // КОНФИГ
 // =============================
-const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=7RUYPnTouod7g1vU';
+const API_URL = 'https://script.google.com/macros/s/AKfycby8WeNxEhf2nwyL_LfElvnByDRYxtUDlbl0CdDPRvMk0LRYDDoMA0VMYDYFk2fO4qZE/exec?key=x9k2m7q4w8n5r1t3';
 
 // Хеши разрешённых паролей (SHA-256)
 const ALLOWED_PASSWORD_HASHES = {
@@ -1024,19 +1024,54 @@ function filteredCalls() {
     else if (filters.period === 'month') cutoff = new Date(now.getTime() - 31 * 86400000);
     else if (filters.period === 'quarter') cutoff = new Date(now.getTime() - 93 * 86400000);
     
-    // Пока данные все за июль 2026 (будущее относительно фактического сейчас) — 
-    // не режем по времени если оно даёт 0. Иначе всё пустое.
     const filteredByDate = calls.filter(c => {
       const d = new Date(c.call_date);
       return d >= cutoff;
     });
-    if (filteredByDate.length > 0) calls = filteredByDate;
+    calls = filteredByDate;
   }
   
   return calls;
 }
 
-// % по параметру: 1/(1+0), NA исключаются
+// Возвращает отфильтрованный список встреч (по периоду)
+function filteredMeetings() {
+  if (!rawData) return [];
+  let meetings = (rawData.meetings_scored || []).slice();
+  
+  if (filters.manager !== 'all') {
+    meetings = meetings.filter(m => m.manager === filters.manager);
+  }
+  if (filters.period !== 'all') {
+    const now = new Date();
+    let cutoff;
+    if (filters.period === 'week') cutoff = new Date(now.getTime() - 7 * 86400000);
+    else if (filters.period === 'month') cutoff = new Date(now.getTime() - 31 * 86400000);
+    else if (filters.period === 'quarter') cutoff = new Date(now.getTime() - 93 * 86400000);
+    
+    meetings = meetings.filter(m => {
+      const d = new Date(m.meeting_date);
+      return d >= cutoff;
+    });
+  }
+  
+  return meetings;
+}
+
+// Возвращает границы текущего периода в удобном для показа виде
+// Например: "24 июля – 30 июля" или "всё время"
+function periodDateRange() {
+  if (!filters.period || filters.period === 'all') return 'всё время';
+  const now = new Date();
+  let cutoff;
+  if (filters.period === 'week') cutoff = new Date(now.getTime() - 7 * 86400000);
+  else if (filters.period === 'month') cutoff = new Date(now.getTime() - 31 * 86400000);
+  else if (filters.period === 'quarter') cutoff = new Date(now.getTime() - 93 * 86400000);
+  const fmt = d => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+  return `${fmt(cutoff)} – ${fmt(now)}`;
+}
+
+
 function pctForParam(calls, paramKey) {
   let ones = 0, zeros = 0;
   for (const c of calls) {
@@ -1117,7 +1152,7 @@ function render() {
   
   // KPI команды
   const totalCalls = calls.length;
-  const totalMeetings = (rawData.meetings_scored || []).length;
+  const totalMeetings = filteredMeetings().length;
   const teamAvg = avgPctScore(calls);
   
   // Распределение по стадиям
@@ -1411,7 +1446,7 @@ function renderTeamProfileSvg(managers, allCalls) {
 function renderManagerRow(m) {
   const initials = getInitials(m.name);
   const avgStr = m.avg_score !== null ? m.avg_score + '%' : '—';
-  const meetingsCount = (rawData.meetings_scored || []).filter(x => x.manager === m.name).length;
+  const meetingsCount = filteredMeetings().filter(x => x.manager === m.name).length;
   const activityStr = `${m.count_period} ${pluralize(m.count_period, 'звонок','звонка','звонков')} · ${meetingsCount} ${pluralize(meetingsCount, 'разбор','разбора','разборов')}`;
   
   // Мини-график — последние 6 звонков по хронологии
