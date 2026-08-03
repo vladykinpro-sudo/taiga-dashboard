@@ -585,6 +585,15 @@ body {
 }
 .calls-table tr:last-child td { border-bottom: none; }
 .calls-table tr:hover td { background: var(--card-hover); }
+.call-summary-cell {
+  max-width: 380px; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden; text-overflow: ellipsis;
+  cursor: help;
+}
+.call-summary-cell:hover {
+  -webkit-line-clamp: unset; overflow: visible;
+}
 .call-type {
   display: inline-block; padding: 2px 8px; border-radius: 6px;
   font-size: 11px; background: var(--card-2); color: var(--text-dim);
@@ -1084,9 +1093,15 @@ function pctForParam(calls, paramKey) {
 }
 
 // % по группе параметров (компетенции)
-function pctForGroup(calls, paramKeys) {
+// Для группы возражений (isObjectionGroup=true) считаются только звонки где has_objections=true
+function pctForGroup(calls, paramKeys, isObjectionGroup) {
   let ones = 0, zeros = 0;
   for (const c of calls) {
+    if (isObjectionGroup) {
+      const has = c.has_objections;
+      const hasObj = has === true || has === 'TRUE' || has === 'true' || has === 1 || has === '1';
+      if (!hasObj) continue;
+    }
     for (const p of paramKeys) {
       const v = c[p];
       if (v === 1 || v === '1') ones++;
@@ -1508,7 +1523,7 @@ function openManager(name) {
   const meetingData = getMeetingsData(name);
   
   document.getElementById('modalName').textContent = m.name;
-  document.getElementById('modalRole').textContent = `Компания «${m.company}» · Стадия: ${m.stage.name}`;
+  document.getElementById('modalRole').textContent = `Компания «${m.company}» · Стадия: ${m.stage.name} · Данные ${periodDateRange()}`;
   
   // Overview с комбинированной стадией
   const stageText = getStageDescription(m.stage.code);
@@ -1568,10 +1583,13 @@ function openManager(name) {
   document.getElementById('tab-competencies').innerHTML = `
     <div class="mod-comp-grid">
       ${COMPETENCIES.map(comp => {
-        const pct = pctForGroup(m.calls_period, comp.params);
-        const pctStr = pct !== null ? pct + '%' : '—';
+        const isObj = comp.code === 'object';
+        const pct = pctForGroup(m.calls_period, comp.params, isObj);
+        const pctStr = pct !== null ? pct + '%' : 'N/A';
         const barWidth = pct !== null ? pct : 0;
-        const detail = pct === null ? 'нет применимых данных за период' : detailForCompetence(comp, pct);
+        const detail = pct === null
+          ? (isObj ? 'возражения не встречались за период' : 'нет применимых данных за период')
+          : detailForCompetence(comp, pct);
         return `
           <div class="mod-comp">
             <div class="mod-comp-name">${comp.name}</div>
@@ -1588,25 +1606,29 @@ function openManager(name) {
   
   // Calls tab
   const callsSorted = m.calls_period.slice().sort((a,b) => new Date(b.call_date) - new Date(a.call_date));
+  const hasAnyType = callsSorted.some(c => c.call_type && String(c.call_type).trim() !== '');
+  const typeHeaderHtml = hasAnyType ? '<th>Тип</th>' : '';
   document.getElementById('tab-calls').innerHTML = `
     <table class="calls-table">
       <thead>
-        <tr><th>Дата</th><th>Тип</th><th>Балл</th><th>Ключевое</th><th>Транскрипт</th></tr>
+        <tr><th>Дата</th>${typeHeaderHtml}<th>Балл</th><th>Ключевое</th><th>Транскрипт</th></tr>
       </thead>
       <tbody>
         ${callsSorted.map(c => {
           const pct = Math.round((parseFloat(c.pct_score) || 0) * 100);
           const pillClass = pct >= 80 ? 'high' : pct >= 60 ? 'mid' : 'low';
+          const typeCellHtml = hasAnyType ? `<td><span class="call-type">${escapeHtml(c.call_type || '—')}</span></td>` : '';
+          const summary = escapeHtml(c.call_summary || '');
           return `
             <tr>
               <td>${formatCallDate(c.call_date)}</td>
-              <td><span class="call-type">${escapeHtml(c.call_type || '—')}</span></td>
+              ${typeCellHtml}
               <td><span class="call-score-pill ${pillClass}">${pct}%</span></td>
-              <td>${escapeHtml((c.call_summary || '').slice(0, 80))}...</td>
+              <td class="call-summary-cell" title="${summary}">${summary}</td>
               <td><a href="${escapeAttr(c.transcript_url || '#')}" target="_blank" style="color: var(--accent); font-size: 12px;">открыть</a></td>
             </tr>
           `;
-        }).join('') || '<tr><td colspan="5" style="text-align:center; padding: 30px; color: var(--text-muted);">Нет звонков за период</td></tr>'}
+        }).join('') || `<tr><td colspan="${hasAnyType ? 5 : 4}" style="text-align:center; padding: 30px; color: var(--text-muted);">Нет звонков за период</td></tr>`}
       </tbody>
     </table>
     <div style="text-align: center; margin-top: 12px; font-size: 12px; color: var(--text-muted);">
